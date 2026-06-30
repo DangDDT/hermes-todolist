@@ -1,10 +1,22 @@
 'use client';
 
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, AlertCircle, RefreshCw } from 'lucide-react';
+import { UpdateTaskSchema, type UpdateTaskInput } from '@/lib/zod-schemas';
 import { useTask, useUpdateTask } from '@/features/tasks/hooks';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -13,6 +25,36 @@ export default function EditTaskPage() {
   const id = params.id as string;
   const { data: taskData, isLoading, isError, error, refetch } = useTask(id);
   const updateTask = useUpdateTask(id);
+
+  const {
+    register,
+    handleSubmit,
+    control,
+    formState: { errors, isSubmitting },
+  } = useForm<UpdateTaskInput>({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    resolver: zodResolver(UpdateTaskSchema) as any,
+    values: taskData?.task
+      ? {
+          title: taskData.task.title,
+          description: taskData.task.description || '',
+          priority: taskData.task.priority,
+          status: taskData.task.status,
+          dueDate: taskData.task.dueDate || null,
+        }
+      : undefined,
+  });
+
+  function onSubmit(data: UpdateTaskInput) {
+    // Clean undefined values for PATCH
+    const cleaned: UpdateTaskInput = {};
+    if (data.title !== undefined) cleaned.title = data.title;
+    if (data.description !== undefined) cleaned.description = data.description || undefined;
+    if (data.priority !== undefined) cleaned.priority = data.priority;
+    if (data.status !== undefined) cleaned.status = data.status;
+    if (data.dueDate !== undefined) cleaned.dueDate = data.dueDate || null;
+    updateTask.mutate(cleaned);
+  }
 
   if (isLoading) {
     return (
@@ -95,21 +137,137 @@ export default function EditTaskPage() {
         <CardHeader>
           <CardTitle>Task Details</CardTitle>
           <CardDescription>
-            Make changes to your task — full form will be implemented with react-hook-form + zod
+            Make changes to your task
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center py-12">
-          <div className="rounded-full bg-muted p-4 mb-4">
-            <ArrowLeft className="h-8 w-8 text-muted-foreground" />
-          </div>
-          <h3 className="text-lg font-semibold mb-2">Edit Form Coming Soon</h3>
-          <p className="text-muted-foreground text-center max-w-md mb-4">
-            The full edit form with react-hook-form + zod validation will be implemented
-            in the next iteration.
-          </p>
-          <Button variant="outline" render={<Link href={`/tasks/${id}`} />}>
-            Back to task
-          </Button>
+        <CardContent>
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <div className="space-y-2">
+              <label htmlFor="title" className="text-sm font-medium">
+                Title <span className="text-destructive">*</span>
+              </label>
+              <Input
+                id="title"
+                placeholder="What needs to be done?"
+                {...register('title')}
+                aria-invalid={!!errors.title}
+              />
+              {errors.title && (
+                <p className="text-sm text-destructive">{errors.title.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label htmlFor="description" className="text-sm font-medium">
+                Description
+              </label>
+              <Textarea
+                id="description"
+                placeholder="Add more details about this task..."
+                rows={4}
+                {...register('description')}
+                aria-invalid={!!errors.description}
+              />
+              {errors.description && (
+                <p className="text-sm text-destructive">{errors.description.message}</p>
+              )}
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-3">
+              <div className="space-y-2">
+                <label htmlFor="priority" className="text-sm font-medium">
+                  Priority
+                </label>
+                <Controller
+                  name="priority"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || 'medium'}
+                      onValueChange={(value) =>
+                        field.onChange(value as UpdateTaskInput['priority'])
+                      }
+                    >
+                      <SelectTrigger id="priority">
+                        <SelectValue placeholder="Select priority" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.priority && (
+                  <p className="text-sm text-destructive">{errors.priority.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="status" className="text-sm font-medium">
+                  Status
+                </label>
+                <Controller
+                  name="status"
+                  control={control}
+                  render={({ field }) => (
+                    <Select
+                      value={field.value || 'todo'}
+                      onValueChange={(value) =>
+                        field.onChange(value as UpdateTaskInput['status'])
+                      }
+                    >
+                      <SelectTrigger id="status">
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todo">To Do</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="done">Done</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {errors.status && (
+                  <p className="text-sm text-destructive">{errors.status.message}</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label htmlFor="dueDate" className="text-sm font-medium">
+                  Due Date
+                </label>
+                <Input
+                  id="dueDate"
+                  type="date"
+                  {...register('dueDate')}
+                  aria-invalid={!!errors.dueDate}
+                />
+                {errors.dueDate && (
+                  <p className="text-sm text-destructive">{errors.dueDate.message}</p>
+                )}
+              </div>
+            </div>
+
+            <div className="flex gap-4 pt-4">
+              <Button
+                type="submit"
+                disabled={isSubmitting || updateTask.isPending}
+              >
+                {updateTask.isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+              <Button type="button" variant="outline" render={<Link href={`/tasks/${id}`} />}>
+                Cancel
+              </Button>
+            </div>
+
+            {updateTask.isError && (
+              <div className="rounded-md bg-destructive/15 p-3 text-sm text-destructive">
+                {updateTask.error?.message || 'Failed to update task'}
+              </div>
+            )}
+          </form>
         </CardContent>
       </Card>
     </div>

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Pencil, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
@@ -9,6 +10,14 @@ import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { cn, formatDateTime } from '@/lib/utils';
 
 const priorityColors: Record<string, string> = {
@@ -28,6 +37,7 @@ export default function TaskDetailPage() {
   const id = params.id as string;
   const { data, isLoading, isError, error, refetch } = useTask(id);
   const deleteTask = useDeleteTask();
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   if (isLoading) {
     return (
@@ -88,6 +98,11 @@ export default function TaskDetailPage() {
 
   const task = data.task;
 
+  function handleDelete() {
+    deleteTask.mutate(id);
+    setShowDeleteDialog(false);
+  }
+
   return (
     <div className="max-w-2xl mx-auto space-y-6">
       {/* Navigation */}
@@ -104,15 +119,10 @@ export default function TaskDetailPage() {
           <Button
             variant="destructive"
             size="sm"
-            onClick={() => {
-              if (confirm('Are you sure you want to delete this task?')) {
-                deleteTask.mutate(id);
-              }
-            }}
-            disabled={deleteTask.isPending}
+            onClick={() => setShowDeleteDialog(true)}
           >
             <Trash2 className="mr-2 h-4 w-4" />
-            {deleteTask.isPending ? 'Deleting...' : 'Delete'}
+            Delete
           </Button>
         </div>
       </div>
@@ -166,6 +176,27 @@ export default function TaskDetailPage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Delete confirmation dialog */}
+      <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Task</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete &ldquo;{task.title}&rdquo;? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter showCloseButton>
+            <Button
+              variant="destructive"
+              onClick={handleDelete}
+              disabled={deleteTask.isPending}
+            >
+              {deleteTask.isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

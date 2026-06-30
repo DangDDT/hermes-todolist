@@ -7,6 +7,8 @@ export async function getTasks(params?: {
   status?: string;
   priority?: string;
   search?: string;
+  sortBy?: string;
+  sortOrder?: string;
 }): Promise<TaskListResponse> {
   const searchParams = new URLSearchParams();
   if (params?.page) searchParams.set('page', String(params.page));
@@ -14,6 +16,8 @@ export async function getTasks(params?: {
   if (params?.status) searchParams.set('status', params.status);
   if (params?.priority) searchParams.set('priority', params.priority);
   if (params?.search) searchParams.set('search', params.search);
+  if (params?.sortBy) searchParams.set('sortBy', params.sortBy);
+  if (params?.sortOrder) searchParams.set('sortOrder', params.sortOrder);
 
   const query = searchParams.toString();
   return apiClient<TaskListResponse>(`/tasks${query ? `?${query}` : ''}`);

@@ -13,6 +13,8 @@ export function useTasks(filters?: {
   status?: string;
   priority?: string;
   search?: string;
+  sortBy?: string;
+  sortOrder?: string;
 }) {
   return useQuery(tasksQueryOptions(filters));
 }
