@@ -1,0 +1,119 @@
+# ============================================
+# Hermes TodoList — Docker Compose
+# ============================================
+# Usage:
+#   docker compose up -d          # Production mode
+#   docker compose -f docker-compose.yml -f docker-compose.override.yml up  # Dev mode
+# ============================================
+
+version: "3.9"
+
+services:
+  # ==========================================
+  # Nginx — Reverse Proxy
+  # ==========================================
+  nginx:
+    image: nginx:1.27-alpine
+    container_name: hermes-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./docker/nginx/ssl:/etc/nginx/ssl:ro # SSL certs (mount manually)
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - hermes-network
+    restart: unless-stopped
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # ==========================================
+  # Go API Server
+  # ==========================================
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: production
+    container_name: hermes-api
+    environment:
+      - DATABASE_URL=postgres://${POSTGRES_USER:-hermes}:${POSTGRES_PASSWORD:-hermes_secret}@postgres:5432/${POSTGRES_DB:-hermes_todolist}?sslmode=disable
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRY_HOURS=${JWT_EXPIRY_HOURS:-168}
+      - SERVER_PORT=${SERVER_PORT:-8080}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
+    expose:
+      - "8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - hermes-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/api/v1/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # ==========================================
+  # PostgreSQL Database
+  # ==========================================
+  postgres:
+    image: postgres:16-alpine
+    container_name: hermes-postgres
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-hermes}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-hermes_secret}
+      - POSTGRES_DB=${POSTGRES_DB:-hermes_todolist}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./backend/internal/infra/postgres/migrations:/docker-entrypoint-initdb.d:ro
+    expose:
+      - "5432"
+    networks:
+      - hermes-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-hermes} -d ${POSTGRES_DB:-hermes_todolist}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ==========================================
+  # Next.js Frontend (Static Export served by Nginx in prod)
+  # In dev: served by Next.js dev server with HMR
+  # ==========================================
+  # frontend:
+  #   build:
+  #     context: ./frontend
+  #     dockerfile: Dockerfile
+  #     target: production
+  #   container_name: hermes-frontend
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - NEXT_PUBLIC_API_URL=http://localhost:8080/api/v1
+  #   depends_on:
+  #     api:
+  #       condition: service_healthy
+  #   networks:
+  #     - hermes-network
+  #   restart: unless-stopped
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  hermes-network:
+    driver: bridge

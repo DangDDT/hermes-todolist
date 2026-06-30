@@ -1,0 +1,52 @@
+# ============================================
+# Hermes TodoList — .gitignore
+# ============================================
+
+# ---- Environment ----
+.env
+.env.local
+.env*.local
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# ---- IDE ----
+.idea/
+.vscode/
+*.iml
+
+# ---- Build ----
+bin/
+tmp/
+dist/
+out/
+
+# ---- Dependencies ----
+node_modules/
+vendor/
+
+# ---- Go ----
+*.exe
+*.test
+*.out
+coverage.out
+coverage.html
+
+# ---- Next.js ----
+.next/
+frontend/.next/
+
+# ---- Docker ----
+docker/nginx/ssl/
+
+# ---- Logs ----
+*.log
+logs/
+
+# ---- Temp ----
+*.tmp
+.cache/
