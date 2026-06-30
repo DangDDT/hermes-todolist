@@ -1,3 +1,14 @@
+// @title Hermes TodoList API
+// @version 1.0
+// @description REST API for Hermes TodoList — a production-grade task management application.
+// @contact.name DangDDT
+// @host localhost:8080
+// @BasePath /api/v1
+// @schemes http https
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
+// @description JWT token. Use "Bearer <token>" or cookie "access_token".
 package main
 
 import (
@@ -30,6 +41,14 @@ import (
 	"github.com/DangDDT/hermes-todolist/backend/internal/shared/response"
 )
 
+// @title Hermes TodoList API
+// @version 1.0
+// @description REST API for Hermes TodoList task management.
+// @Tags         health
+// @Produce      json
+// @Success      200  {object}  map[string]string
+// @Router       /health [get]
+
 func main() {
 	// Load configuration.
 	cfg := config.MustLoad()
@@ -38,10 +57,6 @@ func main() {
 	logLevel := slog.LevelInfo
 	if cfg.Log.Level == "debug" {
 		logLevel = slog.LevelDebug
-	} else if cfg.Log.Level == "warn" {
-		logLevel = slog.LevelWarn
-	} else if cfg.Log.Level == "error" {
-		logLevel = slog.LevelError
 	}
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{Level: logLevel}))
 	slog.SetDefault(logger)
@@ -82,7 +97,6 @@ func main() {
 		AllowedOrigins:   []string{cfg.CORS.Origin},
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-CSRF-Token"},
-		ExposedHeaders:   []string{"Link"},
 		AllowCredentials: true,
 		MaxAge:           300,
 	}))
@@ -91,18 +105,19 @@ func main() {
 
 	// Health check.
 	r.Get("/api/v1/health", func(w http.ResponseWriter, r *http.Request) {
-		response.JSON(w, http.StatusOK, map[string]string{"status": "ok"})
+		response.JSON(w, http.StatusOK, map[string]string{
+			"status":  "ok",
+			"version": "1.0.0",
+		})
 	})
 
 	// API v1 routes.
 	r.Route("/api/v1", func(r chi.Router) {
-		// Auth routes.
 		r.Route("/auth", func(r chi.Router) {
 			r.Mount("/register", auth_register.Routes(registerUC))
 			r.Mount("/login", auth_login.Routes(loginUC))
 		})
 
-		// Task routes.
 		r.Route("/tasks", func(r chi.Router) {
 			r.Mount("/", task_create.Routes(taskCreateUC))
 			r.Mount("/", task_list.Routes(taskListUC))
@@ -111,14 +126,12 @@ func main() {
 			r.Mount("/", task_delete.Routes(taskDeleteUC))
 		})
 
-		// Tag routes.
 		r.Mount("/tags", tag_list.Routes())
 	})
 
-	// Serve Swagger UI (static files).
-	r.Get("/swagger/*", func(w http.ResponseWriter, r *http.Request) {
-		http.StripPrefix("/swagger/", http.FileServer(http.Dir("./docs/swagger"))).ServeHTTP(w, r)
-	})
+	// Swagger UI.
+	fs := http.FileServer(http.Dir("./docs/swagger"))
+	r.Get("/swagger/*", http.StripPrefix("/swagger/", fs).ServeHTTP)
 
 	// Start server.
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)
@@ -130,16 +143,15 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// Graceful shutdown.
 	go func() {
 		sigCh := make(chan os.Signal, 1)
 		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 		<-sigCh
-		logger.Info("shutting down server...")
+		logger.Info("shutting down...")
 		shutdownCtx, shutdownCancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer shutdownCancel()
 		if err := srv.Shutdown(shutdownCtx); err != nil {
-			logger.Error("server forced to shutdown", "error", err)
+			logger.Error("forced shutdown", "error", err)
 		}
 	}()
 
