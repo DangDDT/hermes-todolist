@@ -23,6 +23,7 @@
 | [Desktop Spec](desktop-spec.md) | Electron near-term architecture and reuse strategy |
 | [DevOps Plan](devops-plan.md) | environments, CI/CD, secrets, backups, release checklist |
 | [UX/UI Spec](ux-ui-spec.md) | design principles, IA, visual hierarchy, responsive rules |
+| [Figma Adoption Plan](figma-adoption-plan.md) | Figma-first workflow, file structure, handoff rules |
 | [Requirements Traceability Matrix](requirements-traceability-matrix.md) | PRD to SRS to issue to test mapping |
 | [RACI Matrix](raci-matrix.md) | role accountability and delivery responsibility map |
 | [Defect & Change Management Plan](defect-change-management-plan.md) | bug lifecycle, change control, approval rules |

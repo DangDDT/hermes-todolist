@@ -15,6 +15,7 @@
 | [API Spec](api-spec.md) | REST API endpoints & contracts | ✅ Approved |
 | [Backlog](backlog.md) | Tính năng tương lai + technical debt | ✅ Approved |
 | [Planning Pack](planning/README.md) | Project Plan, Scope, WBS, SRS, Risks, Budget, Tests, Diagrams | ✅ Approved |
+| [Figma Adoption Plan](planning/figma-adoption-plan.md) | Figma-first UX/UI workflow and handoff rules | ✅ Ready |
 | [UX/UI Prototype Review](../prototypes/README.md) | Multi-device prototype artifact for PO review | ✅ Ready for Review |
 | [Database Schema](database-schema.md) | PostgreSQL schema + migrations | 🔄 In Progress |
 
