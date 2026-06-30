@@ -15,6 +15,7 @@
 | BL-002 | Subtasks / Task Nesting | M | Parent-child relationship |
 | BL-003 | Due Date Reminders (Email) | S | Cron job check due dates |
 | BL-004 | Password Reset Flow | S | Email-based reset token |
+| BL-025 | Figma-first UX/UI System & Prototype Refinement | M | Milestone sau: Figma source of truth, system design → components → pages → flows → scenarios → motion |
 
 ### P2 — Phase 3 (Mở rộng team)
 
@@ -74,12 +75,12 @@
 
 | Phase | Features | Tech Debt | Total Items |
 |-------|----------|-----------|-------------|
-| P1 (Phase 2) | 4 | 0 | 4 |
-| P2 (Phase 3) | 7 | 0 | 7 |
-| P3 (Phase 4) | 7 | 0 | 7 |
-| P4 (Future) | 6 | 0 | 6 |
-| Tech Debt | 0 | 10 | 10 |
-| **TOTAL** | **24** | **10** | **34** |
+|| P1 (Phase 2) | 5 | 0 | 5 |
+|| P2 (Phase 3) | 7 | 0 | 7 |
+|| P3 (Phase 4) | 7 | 0 | 7 |
+|| P4 (Future) | 6 | 0 | 6 |
+|| Tech Debt | 0 | 10 | 10 |
+|| **TOTAL** | **25** | **10** | **35** |
 
 ---
 
