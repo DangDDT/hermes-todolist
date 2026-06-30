@@ -14,6 +14,7 @@
 | [Tech Stack](tech-stack.md) | Toàn bộ công nghệ đã chốt từng layer | ✅ Approved |
 | [API Spec](api-spec.md) | REST API endpoints & contracts | ✅ Approved |
 | [Backlog](backlog.md) | Tính năng tương lai + technical debt | ✅ Approved |
+| [Planning Pack](planning/README.md) | Project Plan, Scope, WBS, SRS, Risks, Budget, Tests, Diagrams | ✅ Approved |
 | [Database Schema](database-schema.md) | PostgreSQL schema + migrations | 🔄 In Progress |
 
 ---
