@@ -20,7 +20,10 @@ func NewUsecase(userRepo user.UserRepository) *Usecase {
 // Register creates a new user account.
 func (uc *Usecase) Register(ctx context.Context, req *RegisterUserRequest) (*RegisterUserResponse, error) {
 	// Check if username already exists.
-	existing, _ := uc.userRepo.GetByUsername(ctx, req.Username)
+	existing, err := uc.userRepo.GetByUsername(ctx, req.Username)
+	if err != nil {
+		return nil, apperrors.Internal(err)
+	}
 	if existing != nil {
 		return nil, apperrors.Conflict("User", "username", nil)
 	}
