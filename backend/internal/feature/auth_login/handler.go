@@ -18,7 +18,17 @@ func NewHandler(usecase *Usecase) *Handler {
 	return &Handler{usecase: usecase}
 }
 
-// Login handles the login request.
+// Login godoc
+// @Summary      Login
+// @Description  Authenticate user and return JWT token via cookie
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      LoginRequest  true  "Login payload"
+// @Success      200      {object}  response.Envelope
+// @Failure      400      {object}  response.Envelope
+// @Failure      401      {object}  response.Envelope
+// @Router       /auth/login [post]
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	req, err := DecodeLoginRequest(r)
 	if err != nil {

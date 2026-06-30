@@ -1,0 +1,342 @@
+basePath: /api/v1
+definitions:
+  github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope:
+    properties:
+      code:
+        type: string
+      data: {}
+      error: {}
+      meta: {}
+    type: object
+  internal_feature_auth_login.LoginRequest:
+    properties:
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  internal_feature_auth_register.RegisterUserRequest:
+    properties:
+      display_name:
+        type: string
+      password:
+        type: string
+      username:
+        type: string
+    type: object
+  internal_feature_task_create.CreateTaskRequest:
+    properties:
+      assignee_id:
+        type: string
+      description:
+        type: string
+      due_date:
+        type: string
+      priority:
+        type: string
+      title:
+        type: string
+    type: object
+  internal_feature_task_update.UpdateTaskRequest:
+    properties:
+      assignee_id:
+        type: string
+      description:
+        type: string
+      due_date:
+        type: string
+      priority:
+        type: string
+      status:
+        type: string
+      title:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact:
+    name: DangDDT
+  description: REST API for Hermes TodoList — a production-grade task management application.
+  title: Hermes TodoList API
+  version: "1.0"
+paths:
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return JWT token via cookie
+      parameters:
+      - description: Login payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_feature_auth_login.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+      summary: Login
+      tags:
+      - auth
+  /auth/register:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account with username and password
+      parameters:
+      - description: Registration payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_feature_auth_register.RegisterUserRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+      summary: Register a new user
+      tags:
+      - auth
+  /tags:
+    get:
+      description: List all available tags (no auth required)
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+      summary: List tags
+      tags:
+      - tags
+  /tasks:
+    get:
+      consumes:
+      - application/json
+      description: List tasks with filters and pagination (requires authentication)
+      parameters:
+      - description: Filter by status
+        enum:
+        - TODO
+        - IN_PROGRESS
+        - DONE
+        - CANCELLED
+        in: query
+        name: status
+        type: string
+      - description: Filter by priority
+        enum:
+        - LOW
+        - MEDIUM
+        - HIGH
+        - URGENT
+        in: query
+        name: priority
+        type: string
+      - description: Search in title/description
+        in: query
+        name: search
+        type: string
+      - default: 1
+        description: Page number
+        in: query
+        name: page
+        type: integer
+      - default: 20
+        description: Items per page
+        in: query
+        name: per_page
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: List tasks
+      tags:
+      - tasks
+    post:
+      consumes:
+      - application/json
+      description: Create a new task (requires authentication)
+      parameters:
+      - description: Task payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_feature_task_create.CreateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Create a task
+      tags:
+      - tasks
+  /tasks/{id}:
+    delete:
+      description: Soft-delete a task (sets deleted_at) (requires authentication)
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "204":
+          description: No Content
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Delete a task
+      tags:
+      - tasks
+    get:
+      description: Get a single task by ID (requires authentication)
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Get a task
+      tags:
+      - tasks
+    put:
+      consumes:
+      - application/json
+      description: Partially update a task — only send fields to change (requires
+        authentication)
+      parameters:
+      - description: Task ID
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Fields to update
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_feature_task_update.UpdateTaskRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/github_com_DangDDT_hermes-todolist_backend_internal_shared_response.Envelope'
+      security:
+      - BearerAuth: []
+      summary: Update a task
+      tags:
+      - tasks
+schemes:
+- http
+- https
+securityDefinitions:
+  BearerAuth:
+    description: JWT token. Use "Bearer <token>" or cookie "access_token".
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

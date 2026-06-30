@@ -47,7 +47,18 @@ func NewHandler(usecase *Usecase) *Handler {
 	return &Handler{usecase: usecase}
 }
 
-// Delete handles the delete task request.
+// Delete godoc
+// @Summary      Delete a task
+// @Description  Soft-delete a task (sets deleted_at) (requires authentication)
+// @Tags         tasks
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Task ID"
+// @Success      204
+// @Failure      400  {object}  response.Envelope
+// @Failure      401  {object}  response.Envelope
+// @Failure      404  {object}  response.Envelope
+// @Router       /tasks/{id} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)

@@ -120,7 +120,20 @@ func NewHandler(usecase *Usecase) *Handler {
 	return &Handler{usecase: usecase}
 }
 
-// Update handles the update task request.
+// Update godoc
+// @Summary      Update a task
+// @Description  Partially update a task — only send fields to change (requires authentication)
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id       path      string             true  "Task ID"
+// @Param        request  body      UpdateTaskRequest  true  "Fields to update"
+// @Success      200      {object}  response.Envelope
+// @Failure      400      {object}  response.Envelope
+// @Failure      401      {object}  response.Envelope
+// @Failure      404      {object}  response.Envelope
+// @Router       /tasks/{id} [put]
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)

@@ -18,7 +18,18 @@ func NewHandler(usecase *Usecase) *Handler {
 	return &Handler{usecase: usecase}
 }
 
-// Create handles the create task request.
+// Create godoc
+// @Summary      Create a task
+// @Description  Create a new task (requires authentication)
+// @Tags         tasks
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request  body      CreateTaskRequest  true  "Task payload"
+// @Success      201      {object}  response.Envelope
+// @Failure      400      {object}  response.Envelope
+// @Failure      401      {object}  response.Envelope
+// @Router       /tasks [post]
 func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 	userID, err := middleware.GetUserID(r.Context())
 	if err != nil {

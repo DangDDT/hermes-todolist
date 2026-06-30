@@ -17,7 +17,17 @@ func NewHandler(usecase *Usecase) *Handler {
 	return &Handler{usecase: usecase}
 }
 
-// Register handles the registration request.
+// Register godoc
+// @Summary      Register a new user
+// @Description  Create a new user account with username and password
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request  body      RegisterUserRequest  true  "Registration payload"
+// @Success      201      {object}  response.Envelope
+// @Failure      400      {object}  response.Envelope
+// @Failure      409      {object}  response.Envelope
+// @Router       /auth/register [post]
 func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 	req, err := DecodeRegisterUserRequest(r)
 	if err != nil {

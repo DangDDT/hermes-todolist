@@ -45,7 +45,14 @@ func NewHandler(usecase *Usecase) *Handler {
 	return &Handler{usecase: usecase}
 }
 
-// List handles the list tags request.
+// List godoc
+// @Summary      List tags
+// @Description  List all available tags (no auth required)
+// @Tags         tags
+// @Produce      json
+// @Success      200  {object}  response.Envelope
+// @Failure      500  {object}  response.Envelope
+// @Router       /tags [get]
 func (h *Handler) List(w http.ResponseWriter, r *http.Request) {
 	result, err := h.usecase.List(r.Context())
 	if err != nil {

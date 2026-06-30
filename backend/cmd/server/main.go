@@ -1,14 +1,14 @@
-// @title Hermes TodoList API
-// @version 1.0
-// @description REST API for Hermes TodoList — a production-grade task management application.
-// @contact.name DangDDT
-// @host localhost:8080
-// @BasePath /api/v1
-// @schemes http https
+// @title           Hermes TodoList API
+// @version         1.0
+// @description     REST API for Hermes TodoList — a production-grade task management application.
+// @contact.name    DangDDT
+// @host            localhost:8080
+// @BasePath        /api/v1
+// @schemes         http https
 // @securityDefinitions.apikey BearerAuth
-// @in header
-// @name Authorization
-// @description JWT token. Use "Bearer <token>" or cookie "access_token".
+// @in              header
+// @name            Authorization
+// @description     JWT token. Use "Bearer <token>" or cookie "access_token".
 package main
 
 import (
@@ -41,14 +41,6 @@ import (
 	"github.com/DangDDT/hermes-todolist/backend/internal/infra/repository"
 	"github.com/DangDDT/hermes-todolist/backend/internal/shared/response"
 )
-
-// @title Hermes TodoList API
-// @version 1.0
-// @description REST API for Hermes TodoList task management.
-// @Tags         health
-// @Produce      json
-// @Success      200  {object}  map[string]string
-// @Router       /health [get]
 
 func main() {
 	// Load configuration.

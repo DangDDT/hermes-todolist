@@ -73,7 +73,18 @@ func NewHandler(usecase *Usecase) *Handler {
 	return &Handler{usecase: usecase}
 }
 
-// Get handles the get task request.
+// Get godoc
+// @Summary      Get a task
+// @Description  Get a single task by ID (requires authentication)
+// @Tags         tasks
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      string  true  "Task ID"
+// @Success      200  {object}  response.Envelope
+// @Failure      400  {object}  response.Envelope
+// @Failure      401  {object}  response.Envelope
+// @Failure      404  {object}  response.Envelope
+// @Router       /tasks/{id} [get]
 func (h *Handler) Get(w http.ResponseWriter, r *http.Request) {
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
