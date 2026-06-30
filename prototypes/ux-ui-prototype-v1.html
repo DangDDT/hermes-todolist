@@ -1,0 +1,1121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hermes TodoList — UX/UI Prototype Review v1</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: #121a2f;
+      --panel-2: #18223d;
+      --surface: rgba(255,255,255,0.05);
+      --surface-2: rgba(255,255,255,0.08);
+      --line: rgba(255,255,255,0.12);
+      --text: #edf3ff;
+      --muted: #9fb0d0;
+      --accent: #69a3ff;
+      --accent-2: #8a7dff;
+      --success: #31c48d;
+      --warn: #f3b44e;
+      --danger: #ef6b73;
+      --todo: #6aa8ff;
+      --progress: #9a7cff;
+      --done: #31c48d;
+      --cancel: #8b95ad;
+      --shadow: 0 20px 60px rgba(0,0,0,0.32);
+      --radius-xl: 28px;
+      --radius-lg: 20px;
+      --radius-md: 14px;
+      --radius-sm: 10px;
+      --space-1: 4px;
+      --space-2: 8px;
+      --space-3: 12px;
+      --space-4: 16px;
+      --space-5: 20px;
+      --space-6: 24px;
+      --space-7: 32px;
+      --space-8: 40px;
+      --font: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body.light {
+      --bg: #eef3fb;
+      --panel: #ffffff;
+      --panel-2: #f7f9fd;
+      --surface: rgba(15,23,42,0.04);
+      --surface-2: rgba(15,23,42,0.08);
+      --line: rgba(15,23,42,0.09);
+      --text: #15233d;
+      --muted: #66758f;
+      --shadow: 0 24px 60px rgba(26, 44, 87, 0.12);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; font-family: var(--font); background: radial-gradient(circle at top left, rgba(105,163,255,0.18), transparent 28%), radial-gradient(circle at top right, rgba(138,125,255,0.16), transparent 24%), var(--bg); color: var(--text); }
+    body { min-height: 100vh; }
+    a { color: inherit; }
+    button, select, input { font: inherit; }
+
+    .shell {
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: var(--space-6);
+      padding: var(--space-6);
+    }
+
+    .panel {
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      border: 1px solid var(--line);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow);
+    }
+
+    .sidebar {
+      position: sticky;
+      top: var(--space-6);
+      align-self: start;
+      padding: var(--space-6);
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-6);
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-4);
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 1.1rem;
+      line-height: 1.3;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 0.84rem;
+    }
+
+    .meta h2, .control-group h2, .section h2 {
+      margin: 0 0 12px;
+      font-size: 0.92rem;
+      letter-spacing: 0.02em;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+
+    .meta p, .meta li, .section p, .section li {
+      color: var(--muted);
+      line-height: 1.6;
+      margin: 0;
+      font-size: 0.94rem;
+    }
+
+    .meta ul, .section ul {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+    }
+
+    .segmented {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .segmented button, .toggle {
+      min-height: 42px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      transition: transform 180ms ease, background 180ms ease, border-color 180ms ease;
+    }
+
+    .segmented button.active, .toggle.active {
+      background: linear-gradient(135deg, rgba(105,163,255,0.32), rgba(138,125,255,0.28));
+      border-color: rgba(138,125,255,0.5);
+    }
+
+    .segmented button:hover, .toggle:hover { transform: translateY(-1px); }
+
+    .workspace {
+      display: grid;
+      gap: var(--space-6);
+    }
+
+    .hero {
+      padding: var(--space-7);
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: var(--space-6);
+      align-items: center;
+    }
+
+    .hero h2 {
+      margin: 0 0 14px;
+      font-size: clamp(2rem, 3.4vw, 3.4rem);
+      line-height: 1.08;
+      letter-spacing: -0.04em;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 62ch;
+      line-height: 1.7;
+    }
+
+    .scoreboard {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    .mini-card {
+      padding: 16px;
+      border-radius: var(--radius-lg);
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+
+    .mini-card strong {
+      display: block;
+      font-size: 1.3rem;
+      margin-top: 6px;
+    }
+
+    .section {
+      padding: var(--space-6);
+    }
+
+    .canvas-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .canvas-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(260px, 1fr));
+      gap: 18px;
+      align-items: start;
+    }
+
+    .device-card {
+      padding: 16px;
+      background: var(--surface);
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      transition: transform 240ms ease, border-color 240ms ease;
+    }
+
+    .device-card:hover { transform: translateY(-2px); border-color: rgba(105,163,255,0.35); }
+
+    .device-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .device-frame {
+      position: relative;
+      background: #0a0f1d;
+      border-radius: 28px;
+      padding: 12px;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.06);
+    }
+
+    body.light .device-frame { background: #dbe6f4; }
+
+    .screen {
+      overflow: hidden;
+      background: var(--panel);
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      min-height: 520px;
+      display: flex;
+      flex-direction: column;
+      transition: all 220ms ease;
+    }
+
+    .screen.desktop { aspect-ratio: 16 / 10; min-height: 0; }
+    .screen.tablet { aspect-ratio: 4 / 5; min-height: 0; }
+    .screen.mobile { aspect-ratio: 9 / 19; min-height: 0; }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: 88px 1fr 340px;
+      min-height: 100%;
+    }
+
+    .tablet .app-shell { grid-template-columns: 72px 1fr; }
+    .mobile .app-shell { grid-template-columns: 1fr; }
+
+    .nav {
+      border-right: 1px solid var(--line);
+      padding: 18px 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.04), transparent);
+    }
+
+    .mobile .nav { display: none; }
+
+    .nav-badge {
+      width: 48px;
+      height: 48px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid;
+      place-items: center;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+    }
+
+    .nav-item {
+      min-height: 44px;
+      border-radius: 14px;
+      display: grid;
+      place-items: center;
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid transparent;
+    }
+
+    .nav-item.active {
+      background: rgba(105,163,255,0.16);
+      border-color: rgba(105,163,255,0.22);
+      color: var(--text);
+    }
+
+    .main-pane {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .search {
+      flex: 1;
+      min-height: 42px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      padding: 0 14px;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+    }
+
+    .chip-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      padding: 16px 20px 0;
+    }
+
+    .chip {
+      padding: 8px 12px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .content {
+      padding: 16px 20px 22px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .list-card, .detail-card, .metric, .component-card {
+      border: 1px solid var(--line);
+      background: var(--surface);
+      border-radius: 18px;
+      padding: 16px;
+    }
+
+    .list-card {
+      display: grid;
+      gap: 12px;
+      transition: background 180ms ease, transform 180ms ease;
+    }
+
+    .list-card:hover { background: var(--surface-2); transform: translateY(-1px); }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .card-title {
+      font-weight: 650;
+      line-height: 1.4;
+    }
+
+    .card-sub {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.6;
+    }
+
+    .badges { display: flex; flex-wrap: wrap; gap: 8px; }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .status-todo { background: rgba(106,168,255,0.14); color: #9ec3ff; border-color: rgba(106,168,255,0.25); }
+    .status-progress { background: rgba(154,124,255,0.16); color: #b9a7ff; border-color: rgba(154,124,255,0.26); }
+    .status-done { background: rgba(49,196,141,0.16); color: #82e2bc; border-color: rgba(49,196,141,0.22); }
+    .priority-high { background: rgba(243,180,78,0.14); color: #ffd18a; border-color: rgba(243,180,78,0.22); }
+    .priority-urgent { background: rgba(239,107,115,0.16); color: #ffabb0; border-color: rgba(239,107,115,0.25); }
+    .priority-medium { background: rgba(255,255,255,0.1); color: var(--text); border-color: var(--line); }
+    .tag { background: rgba(255,255,255,0.08); color: var(--muted); border-color: var(--line); }
+
+    .side-pane {
+      border-left: 1px solid var(--line);
+      padding: 20px 18px;
+      display: grid;
+      align-content: start;
+      gap: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent);
+    }
+
+    .tablet .side-pane, .mobile .side-pane { display: none; }
+
+    .metric-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+
+    .metric strong { display: block; font-size: 1.1rem; margin-top: 6px; }
+
+    .flow-board {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(160px, 1fr));
+      gap: 14px;
+    }
+
+    .flow-step {
+      border-radius: 18px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+      min-height: 172px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .flow-step::after {
+      content: '';
+      position: absolute;
+      inset: auto -28px 28px auto;
+      width: 76px;
+      height: 76px;
+      border-radius: 20px;
+      background: linear-gradient(135deg, rgba(105,163,255,0.22), rgba(138,125,255,0.2));
+      filter: blur(8px);
+    }
+
+    .components-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(180px, 1fr));
+      gap: 14px;
+    }
+
+    .component-card {
+      display: grid;
+      gap: 12px;
+      min-height: 160px;
+    }
+
+    .token-bar {
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .token {
+      border-radius: 18px;
+      padding: 18px;
+      border: 1px solid var(--line);
+      min-height: 116px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+
+    .t-accent { background: linear-gradient(135deg, rgba(105,163,255,0.28), rgba(138,125,255,0.28)); }
+    .t-success { background: rgba(49,196,141,0.16); }
+    .t-warn { background: rgba(243,180,78,0.16); }
+    .t-danger { background: rgba(239,107,115,0.16); }
+    .t-neutral { background: var(--surface); }
+
+    .prototype-notes {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: 18px;
+    }
+
+    .scenario-list {
+      display: grid;
+      gap: 12px;
+    }
+
+    .scenario-item {
+      padding: 14px 16px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+    }
+
+    .motion-preview {
+      position: relative;
+      min-height: 240px;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(105,163,255,0.12), rgba(138,125,255,0.08), transparent);
+    }
+
+    .motion-card {
+      position: absolute;
+      left: 26px;
+      width: 220px;
+      padding: 16px;
+      border-radius: 18px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow);
+      animation: floatCard 5.2s ease-in-out infinite;
+    }
+
+    .motion-card.one { top: 26px; }
+    .motion-card.two { top: 110px; left: 120px; animation-delay: 0.9s; }
+    .motion-card.three { top: 185px; left: 56px; animation-delay: 1.8s; }
+
+    @keyframes floatCard {
+      0%, 100% { transform: translateY(0px) scale(1); opacity: 0.92; }
+      50% { transform: translateY(-10px) scale(1.01); opacity: 1; }
+    }
+
+    .hidden { display: none !important; }
+
+    .mobile-topnav {
+      display: none;
+      padding: 14px 16px 0;
+      gap: 8px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .mobile .mobile-topnav { display: flex; }
+    .mobile .topbar { padding-top: 10px; }
+
+    .screen-auth .app-shell,
+    .screen-auth.tablet .app-shell,
+    .screen-auth.mobile .app-shell {
+      grid-template-columns: 1fr;
+    }
+
+    .auth-wrap {
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 28px;
+      background: radial-gradient(circle at top, rgba(105,163,255,0.16), transparent 35%);
+    }
+
+    .auth-card {
+      width: min(100%, 440px);
+      padding: 24px;
+      border-radius: 22px;
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, var(--panel), var(--panel-2));
+      display: grid;
+      gap: 14px;
+    }
+
+    .field {
+      display: grid;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .input {
+      min-height: 46px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: var(--surface);
+      padding: 0 14px;
+      display: flex;
+      align-items: center;
+      color: var(--muted);
+    }
+
+    .button-primary, .button-secondary {
+      min-height: 46px;
+      border-radius: 14px;
+      border: 1px solid transparent;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 16px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .button-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white;
+    }
+
+    .button-secondary {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 0.86rem;
+      line-height: 1.6;
+    }
+
+    @media (max-width: 1280px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { position: static; }
+      .hero { grid-template-columns: 1fr; }
+      .canvas-grid, .components-grid, .token-bar, .flow-board, .prototype-notes { grid-template-columns: 1fr 1fr; }
+    }
+
+    @media (max-width: 860px) {
+      .canvas-grid, .components-grid, .token-bar, .flow-board, .prototype-notes { grid-template-columns: 1fr; }
+      .section, .hero, .sidebar { padding: 20px; }
+      .shell { padding: 16px; gap: 16px; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar panel">
+      <div class="brand">
+        <div>
+          <div class="pill">UX/UI Prototype Review · v1</div>
+          <h1>Hermes TodoList<br/>Cross-platform design baseline</h1>
+        </div>
+        <button class="toggle" id="themeToggle">Theme</button>
+      </div>
+
+      <div class="meta">
+        <h2>Design posture</h2>
+        <p><strong>Primary surface:</strong> Operate. Đây là product UI để hành động và quản lý task, không phải landing page. Vì vậy Tada ưu tiên scanability, state clarity, và action hierarchy hơn visual drama.</p>
+      </div>
+
+      <div class="meta">
+        <h2>Review intent</h2>
+        <ul>
+          <li>System first: tokens, hierarchy, states, spacing.</li>
+          <li>Consistency across desktop, tablet, mobile.</li>
+          <li>Prototype covers list, detail, create/edit, auth, and interaction rhythm.</li>
+        </ul>
+      </div>
+
+      <div class="control-group">
+        <h2>Current page</h2>
+        <div class="segmented" id="pageControls">
+          <button class="active" data-page="tasks">Task List</button>
+          <button data-page="detail">Task Detail</button>
+          <button data-page="create">Create/Edit</button>
+          <button data-page="auth">Auth</button>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <h2>Scenario mode</h2>
+        <div class="segmented" id="scenarioControls">
+          <button class="active" data-scenario="default">Default</button>
+          <button data-scenario="empty">Empty</button>
+          <button data-scenario="focus">Focus / In Progress</button>
+          <button data-scenario="review">Review / Handoff</button>
+        </div>
+      </div>
+
+      <div class="meta">
+        <h2>Quality bar</h2>
+        <ul>
+          <li>Title &gt; status/priority &gt; due date &gt; assignee &gt; tags.</li>
+          <li>Delete actions are confirmed and visually secondary.</li>
+          <li>Filters collapse gracefully on smaller breakpoints.</li>
+          <li>Motion is subtle and state-oriented, not decorative.</li>
+        </ul>
+      </div>
+    </aside>
+
+    <main class="workspace">
+      <section class="hero panel">
+        <div>
+          <div class="pill">Phase 2 · Prototype review artifact</div>
+          <h2>One design system, many devices, same product logic.</h2>
+          <p>This prototype is intentionally built as a review board for the PO: it starts from the system layer, then shows components, then multi-device pages, then key flows and scenarios, and finally motion posture. It is meant to validate experience direction before deeper polish and production handoff.</p>
+        </div>
+        <div class="scoreboard">
+          <div class="mini-card"><span class="pill">System</span><strong>Tokens + hierarchy</strong></div>
+          <div class="mini-card"><span class="pill">Components</span><strong>Cards, badges, dialogs, form fields</strong></div>
+          <div class="mini-card"><span class="pill">Pages</span><strong>Desktop / tablet / mobile</strong></div>
+          <div class="mini-card"><span class="pill">Prototype</span><strong>Flows + scenario switching + animation baseline</strong></div>
+        </div>
+      </section>
+
+      <section class="section panel">
+        <div class="canvas-header">
+          <div>
+            <h2>System design tokens</h2>
+            <p>Unified semantic tokens across all surfaces: fewer accents, stronger hierarchy, and consistent state colors for status and priority.</p>
+          </div>
+          <div class="pill">Simple first · production-clean · low cognitive load</div>
+        </div>
+        <div class="token-bar">
+          <div class="token t-accent"><strong>Accent / Action</strong><span>#69A3FF → #8A7DFF</span></div>
+          <div class="token t-success"><strong>Success / Done</strong><span>Completion, safe confirmation</span></div>
+          <div class="token t-warn"><strong>Warn / High</strong><span>Priority without panic</span></div>
+          <div class="token t-danger"><strong>Danger / Urgent</strong><span>Urgent tasks, destructive intent</span></div>
+          <div class="token t-neutral"><strong>Neutral / Structure</strong><span>Panels, borders, quiet secondary info</span></div>
+        </div>
+      </section>
+
+      <section class="section panel">
+        <div class="canvas-header">
+          <div>
+            <h2>Core components</h2>
+            <p>Components chosen for product operation surfaces, not marketing surfaces.</p>
+          </div>
+        </div>
+        <div class="components-grid">
+          <div class="component-card"><strong>Task card</strong><div class="list-card"><div class="card-top"><div><div class="card-title">Prepare release smoke checklist</div><div class="card-sub">High-signal summary with just enough metadata.</div></div><span class="badge status-progress">IN PROGRESS</span></div><div class="badges"><span class="badge priority-high">HIGH</span><span class="badge tag">devops</span><span class="badge tag">release</span></div></div></div>
+          <div class="component-card"><strong>Status / Priority badges</strong><div class="badges"><span class="badge status-todo">TODO</span><span class="badge status-progress">IN PROGRESS</span><span class="badge status-done">DONE</span><span class="badge priority-urgent">URGENT</span><span class="badge priority-medium">MEDIUM</span></div></div>
+          <div class="component-card"><strong>Filter bar</strong><div class="chip-row" style="padding:0;"><span class="chip">Status: In Progress</span><span class="chip">Priority: High</span><span class="chip">Sort: Due Date</span></div><div class="search">Search tasks, assignee, or tag…</div></div>
+          <div class="component-card"><strong>Confirm destructive action</strong><div class="detail-card"><div class="card-title">Delete task?</div><div class="card-sub">Task will be soft-deleted and removed from active views.</div><div style="display:flex; gap:10px; margin-top:12px;"><div class="button-secondary">Cancel</div><div class="button-primary" style="background:linear-gradient(135deg, #ef6b73, #ca4457);">Delete</div></div></div></div>
+        </div>
+      </section>
+
+      <section class="section panel">
+        <div class="canvas-header">
+          <div>
+            <h2>Multi-device page prototype</h2>
+            <p>Same information model, different layout posture. Desktop prioritizes breadth, tablet balances density, mobile preserves critical path.</p>
+          </div>
+          <div class="pill" id="pageLabel">Task List · Default</div>
+        </div>
+        <div class="canvas-grid" id="deviceCanvas"></div>
+      </section>
+
+      <section class="section panel">
+        <div class="canvas-header">
+          <div>
+            <h2>Flow map</h2>
+            <p>Prototype review should validate operational flows, not just static screens.</p>
+          </div>
+        </div>
+        <div class="flow-board">
+          <div class="flow-step"><strong>1. Enter</strong><span class="footer-note">Login/register should feel calm and low-friction. No marketing noise.</span></div>
+          <div class="flow-step"><strong>2. Orient</strong><span class="footer-note">Task list answers “What matters now?” within 5 seconds.</span></div>
+          <div class="flow-step"><strong>3. Act</strong><span class="footer-note">Create/edit flows reduce hesitation with clear field grouping and low-noise validation.</span></div>
+          <div class="flow-step"><strong>4. Confirm</strong><span class="footer-note">Destructive actions are confirmed. Success states are clear but lightweight.</span></div>
+        </div>
+      </section>
+
+      <section class="section panel">
+        <div class="canvas-header">
+          <div>
+            <h2>Scenario review + motion posture</h2>
+            <p>Scenarios help the PO evaluate whether the system handles real usage patterns, not just ideal screenshots.</p>
+          </div>
+        </div>
+        <div class="prototype-notes">
+          <div class="scenario-list">
+            <div class="scenario-item"><strong>Scenario A · Busy IC</strong><br><span class="footer-note">Open app, scan in-progress tasks, reprioritize one item, jump to detail, return fast.</span></div>
+            <div class="scenario-item"><strong>Scenario B · Team lead</strong><br><span class="footer-note">Create a task, assign owner, set due date, verify it appears in active list with clear status.</span></div>
+            <div class="scenario-item"><strong>Scenario C · Recovery</strong><br><span class="footer-note">No tasks or API hiccup must still give a clear path forward through empty/error states.</span></div>
+          </div>
+          <div class="motion-preview">
+            <div class="motion-card one"><strong>List → Detail</strong><div class="footer-note">Card lift + pane focus, not a theatrical transition.</div></div>
+            <div class="motion-card two"><strong>Filter Change</strong><div class="footer-note">Light content refresh motion to preserve context.</div></div>
+            <div class="motion-card three"><strong>Create Success</strong><div class="footer-note">Toast + list insertion rhythm, fast but reassuring.</div></div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const state = {
+      page: 'tasks',
+      scenario: 'default',
+      theme: 'dark'
+    };
+
+    const devices = [
+      { key: 'desktop', label: 'Desktop', size: '1440 × 900' },
+      { key: 'tablet', label: 'Tablet', size: '834 × 1194' },
+      { key: 'mobile', label: 'Mobile', size: '390 × 844' }
+    ];
+
+    const tasks = [
+      {
+        title: 'Finalize Sprint 1 review notes',
+        desc: 'Consolidate engineering + PO notes before release readiness check.',
+        status: 'IN PROGRESS',
+        priority: 'HIGH',
+        assignee: 'DangDDT',
+        due: 'Today · 17:30',
+        tags: ['planning', 'review']
+      },
+      {
+        title: 'Implement monitoring baseline',
+        desc: 'Wire health checks, log review, and first error tracking decision.',
+        status: 'TODO',
+        priority: 'URGENT',
+        assignee: 'DevOps',
+        due: 'Tomorrow · 11:00',
+        tags: ['ops', 'observability']
+      },
+      {
+        title: 'Prepare backend test matrix',
+        desc: 'Map domain, repository, and API coverage for MVP sign-off.',
+        status: 'DONE',
+        priority: 'MEDIUM',
+        assignee: 'QA',
+        due: 'Completed',
+        tags: ['testing']
+      }
+    ];
+
+    function badgeClass(kind, value) {
+      if (kind === 'status') {
+        if (value === 'TODO') return 'status-todo';
+        if (value === 'IN PROGRESS') return 'status-progress';
+        return 'status-done';
+      }
+      if (value === 'HIGH') return 'priority-high';
+      if (value === 'URGENT') return 'priority-urgent';
+      return 'priority-medium';
+    }
+
+    function renderTaskCards(scenario) {
+      if (scenario === 'empty') {
+        return `
+          <div class="detail-card">
+            <div class="card-title">No active tasks yet</div>
+            <div class="card-sub">Start by creating your first task or import a sprint checklist. Empty states should reduce doubt and suggest action.</div>
+            <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+              <div class="button-primary">Create Task</div>
+              <div class="button-secondary">Import Template</div>
+            </div>
+          </div>`;
+      }
+      const set = scenario === 'focus' ? tasks.slice(0, 2) : tasks;
+      return set.map(task => `
+        <div class="list-card">
+          <div class="card-top">
+            <div>
+              <div class="card-title">${task.title}</div>
+              <div class="card-sub">${task.desc}</div>
+            </div>
+            <span class="badge ${badgeClass('status', task.status)}">${task.status}</span>
+          </div>
+          <div class="badges">
+            <span class="badge ${badgeClass('priority', task.priority)}">${task.priority}</span>
+            ${task.tags.map(t => `<span class="badge tag">${t}</span>`).join('')}
+          </div>
+          <div class="card-sub">Assignee: ${task.assignee} · Due: ${task.due}</div>
+        </div>
+      `).join('');
+    }
+
+    function renderRightPane() {
+      return `
+        <div class="side-pane">
+          <div class="metric-grid">
+            <div class="metric"><span class="footer-note">In Progress</span><strong>08</strong></div>
+            <div class="metric"><span class="footer-note">Blocked</span><strong>01</strong></div>
+            <div class="metric"><span class="footer-note">Due today</span><strong>03</strong></div>
+            <div class="metric"><span class="footer-note">Done this week</span><strong>14</strong></div>
+          </div>
+          <div class="detail-card">
+            <div class="card-title">Review cues</div>
+            <div class="card-sub">Secondary pane is optional support: metrics, reminders, and next actions. It should never compete with the task list itself.</div>
+          </div>
+          <div class="detail-card">
+            <div class="card-title">Interaction note</div>
+            <div class="card-sub">Quick actions appear on hover/focus in desktop, but remain visible as explicit controls on touch devices.</div>
+          </div>
+        </div>`;
+    }
+
+    function renderTasksScreen(device, scenario) {
+      return `
+        <div class="screen ${device}">
+          <div class="app-shell">
+            <div class="nav">
+              <div class="nav-badge">HT</div>
+              <div class="nav-item active">☰</div>
+              <div class="nav-item">⚙</div>
+            </div>
+            <div class="main-pane">
+              ${device === 'mobile' ? `<div class="mobile-topnav"><div class="pill">Tasks</div><div class="pill">+ New</div></div>` : ''}
+              <div class="topbar">
+                <div>
+                  <div class="card-title">My Tasks</div>
+                  <div class="card-sub">See what matters now, then act fast.</div>
+                </div>
+                <div class="search">Search, assignee, or tag…</div>
+              </div>
+              <div class="chip-row">
+                <span class="chip">Status: ${scenario === 'focus' ? 'In Progress' : 'All'}</span>
+                <span class="chip">Priority: All</span>
+                <span class="chip">Sort: Due date</span>
+              </div>
+              <div class="content">
+                ${renderTaskCards(scenario)}
+              </div>
+            </div>
+            ${renderRightPane()}
+          </div>
+        </div>`;
+    }
+
+    function renderDetailScreen(device, scenario) {
+      return `
+        <div class="screen ${device}">
+          <div class="app-shell">
+            <div class="nav">
+              <div class="nav-badge">HT</div>
+              <div class="nav-item active">☰</div>
+              <div class="nav-item">⚙</div>
+            </div>
+            <div class="main-pane">
+              ${device === 'mobile' ? `<div class="mobile-topnav"><div class="pill">Back</div><div class="pill">Edit</div></div>` : ''}
+              <div class="topbar">
+                <div>
+                  <div class="card-title">Task Detail</div>
+                  <div class="card-sub">Deep work surface with clear metadata and secondary actions.</div>
+                </div>
+                <div class="badges">
+                  <span class="badge status-progress">IN PROGRESS</span>
+                  <span class="badge priority-high">HIGH</span>
+                </div>
+              </div>
+              <div class="content">
+                <div class="detail-card">
+                  <div class="card-title">Finalize Sprint 1 review notes</div>
+                  <div class="card-sub">Consolidate backend, frontend, and PO observations into one sign-off note before release hardening starts.</div>
+                </div>
+                <div class="detail-card">
+                  <div class="badges">
+                    <span class="badge tag">planning</span>
+                    <span class="badge tag">review</span>
+                    <span class="badge tag">mvp</span>
+                  </div>
+                  <div class="card-sub" style="margin-top:10px;">Assignee: DangDDT · Creator: Tada · Due: Today 17:30</div>
+                </div>
+                <div class="detail-card">
+                  <div class="card-title">Action posture</div>
+                  <div class="card-sub">Primary action = update/edit. Secondary = delete with confirmation. Destructive behavior should never visually outrank safe actions.</div>
+                  <div style="display:flex; gap:10px; margin-top:14px; flex-wrap:wrap;">
+                    <div class="button-primary">Edit Task</div>
+                    <div class="button-secondary">Change Status</div>
+                    ${scenario === 'review' ? `<div class="button-secondary" style="border-color: rgba(239,107,115,0.36); color: #ffb8bc;">Delete…</div>` : ''}
+                  </div>
+                </div>
+              </div>
+            </div>
+            ${renderRightPane()}
+          </div>
+        </div>`;
+    }
+
+    function renderCreateScreen(device) {
+      return `
+        <div class="screen ${device}">
+          <div class="app-shell">
+            <div class="nav">
+              <div class="nav-badge">HT</div>
+              <div class="nav-item active">☰</div>
+              <div class="nav-item">⚙</div>
+            </div>
+            <div class="main-pane">
+              ${device === 'mobile' ? `<div class="mobile-topnav"><div class="pill">Cancel</div><div class="pill">Save</div></div>` : ''}
+              <div class="topbar">
+                <div>
+                  <div class="card-title">Create / Edit Task</div>
+                  <div class="card-sub">Form hierarchy emphasizes confidence and speed.</div>
+                </div>
+                <div class="pill">Autosave off</div>
+              </div>
+              <div class="content">
+                <div class="detail-card">
+                  <div class="field"><strong>Title</strong><div class="input">Prepare Phase 2 sign-off package</div></div>
+                </div>
+                <div class="detail-card">
+                  <div class="field"><strong>Description</strong><div class="input" style="min-height:88px; align-items:flex-start; padding-top:14px;">Bundle final docs, PO note, and remaining execution blockers before Phase 3 continues.</div></div>
+                </div>
+                <div class="detail-card">
+                  <div style="display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 12px;">
+                    <div class="field"><strong>Priority</strong><div class="input">High</div></div>
+                    <div class="field"><strong>Status</strong><div class="input">Todo</div></div>
+                    <div class="field"><strong>Due Date</strong><div class="input">2026-07-01</div></div>
+                    <div class="field"><strong>Assignee</strong><div class="input">DangDDT</div></div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                  <div class="button-primary">Save Task</div>
+                  <div class="button-secondary">Cancel</div>
+                </div>
+              </div>
+            </div>
+            ${renderRightPane()}
+          </div>
+        </div>`;
+    }
+
+    function renderAuthScreen(device, scenario) {
+      const isRegister = scenario === 'review';
+      return `
+        <div class="screen ${device} screen-auth">
+          <div class="auth-wrap">
+            <div class="auth-card">
+              <div class="pill">${isRegister ? 'Register' : 'Login'} flow</div>
+              <div>
+                <div class="card-title">${isRegister ? 'Create your workspace identity' : 'Welcome back to Hermes TodoList'}</div>
+                <div class="card-sub">${isRegister ? 'Calm, low-noise onboarding for small team setup.' : 'Fast entry for returning users — no distraction, direct action.'}</div>
+              </div>
+              <div class="field"><strong>Username</strong><div class="input">dangddt</div></div>
+              ${isRegister ? '<div class="field"><strong>Display Name</strong><div class="input">Dang DDT</div></div>' : ''}
+              <div class="field"><strong>Password</strong><div class="input">••••••••••••</div></div>
+              ${isRegister ? '<div class="field"><strong>Confirm Password</strong><div class="input">••••••••••••</div></div>' : ''}
+              <div class="button-primary">${isRegister ? 'Create Account' : 'Sign In'}</div>
+              <div class="footer-note">Form layout stays narrow for confidence and readability across all devices. Visual identity is supportive, not loud.</div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    function screenFor(device, page, scenario) {
+      if (page === 'detail') return renderDetailScreen(device, scenario);
+      if (page === 'create') return renderCreateScreen(device, scenario);
+      if (page === 'auth') return renderAuthScreen(device, scenario);
+      return renderTasksScreen(device, scenario);
+    }
+
+    function renderCanvas() {
+      const canvas = document.getElementById('deviceCanvas');
+      canvas.innerHTML = devices.map(device => `
+        <div class="device-card">
+          <div class="device-top"><strong>${device.label}</strong><span>${device.size}</span></div>
+          <div class="device-frame">
+            ${screenFor(device.key, state.page, state.scenario)}
+          </div>
+        </div>`).join('');
+      document.getElementById('pageLabel').textContent = `${labelForPage(state.page)} · ${labelForScenario(state.scenario)}`;
+    }
+
+    function labelForPage(page) {
+      return {
+        tasks: 'Task List',
+        detail: 'Task Detail',
+        create: 'Create / Edit',
+        auth: 'Auth'
+      }[page];
+    }
+
+    function labelForScenario(scenario) {
+      return {
+        default: 'Default',
+        empty: 'Empty',
+        focus: 'Focus / In Progress',
+        review: 'Review / Handoff'
+      }[scenario];
+    }
+
+    function bindSegmented(id, key) {
+      const root = document.getElementById(id);
+      root.querySelectorAll('button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state[key] = btn.dataset[key];
+          root.querySelectorAll('button').forEach(x => x.classList.remove('active'));
+          btn.classList.add('active');
+          renderCanvas();
+        });
+      });
+    }
+
+    document.getElementById('themeToggle').addEventListener('click', () => {
+      document.body.classList.toggle('light');
+      state.theme = document.body.classList.contains('light') ? 'light' : 'dark';
+      localStorage.setItem('hermes-prototype-theme', state.theme);
+    });
+
+    bindSegmented('pageControls', 'page');
+    bindSegmented('scenarioControls', 'scenario');
+
+    const savedTheme = localStorage.getItem('hermes-prototype-theme');
+    if (savedTheme === 'light') {
+      document.body.classList.add('light');
+      state.theme = 'light';
+    }
+
+    renderCanvas();
+  </script>
+</body>
+</html>
