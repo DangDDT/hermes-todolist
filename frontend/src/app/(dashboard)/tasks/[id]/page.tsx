@@ -1,15 +1,17 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, type FormEvent } from 'react';
 import { useParams } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowLeft, Pencil, Trash2, AlertCircle, RefreshCw } from 'lucide-react';
+import { ArrowLeft, Pencil, Trash2, AlertCircle, RefreshCw, MessageSquare, Send } from 'lucide-react';
 import { useTask, useDeleteTask } from '@/features/tasks/hooks';
+import { useTaskComments, useCreateTaskComment } from '@/features/task-comments/hooks';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Separator } from '@/components/ui/separator';
+import { Textarea } from '@/components/ui/textarea';
 import {
   Dialog,
   DialogContent,
@@ -36,8 +38,11 @@ export default function TaskDetailPage() {
   const params = useParams();
   const id = params.id as string;
   const { data, isLoading, isError, error, refetch } = useTask(id);
+  const { data: commentsData, isLoading: commentsLoading, isError: commentsIsError, error: commentsError, refetch: refetchComments } = useTaskComments(id);
+  const createComment = useCreateTaskComment(id);
   const deleteTask = useDeleteTask();
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+  const [commentBody, setCommentBody] = useState('');
 
   if (isLoading) {
     return (
@@ -97,6 +102,20 @@ export default function TaskDetailPage() {
   }
 
   const task = data.task;
+
+  function handleCommentSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const body = commentBody.trim();
+    if (!body) return;
+    createComment.mutate(
+      { body },
+      {
+        onSuccess: () => {
+          setCommentBody('');
+        },
+      }
+    );
+  }
 
   function handleDelete() {
     deleteTask.mutate(id);
@@ -174,6 +193,70 @@ export default function TaskDetailPage() {
               <p className="text-sm">{formatDateTime(task.updatedAt)}</p>
             </div>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-lg">
+            <MessageSquare className="h-5 w-5" />
+            Comments
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <form className="space-y-3" onSubmit={handleCommentSubmit}>
+            <Textarea
+              value={commentBody}
+              onChange={(event) => setCommentBody(event.target.value)}
+              placeholder="Write a comment to update the team…"
+              rows={4}
+            />
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-muted-foreground">
+                Use comments for review notes, clarification, or handoff context.
+              </p>
+              <Button type="submit" disabled={createComment.isPending || !commentBody.trim()}>
+                <Send className="mr-2 h-4 w-4" />
+                {createComment.isPending ? 'Posting...' : 'Post comment'}
+              </Button>
+            </div>
+          </form>
+
+          <Separator />
+
+          {commentsLoading ? (
+            <div className="space-y-3">
+              <Skeleton className="h-16 w-full" />
+              <Skeleton className="h-16 w-full" />
+            </div>
+          ) : commentsIsError ? (
+            <div className="rounded-lg border border-destructive/40 bg-destructive/5 p-4 text-sm">
+              <p className="font-medium text-destructive">Failed to load comments</p>
+              <p className="mt-1 text-muted-foreground">
+                {commentsError?.message || 'An unexpected error occurred'}
+              </p>
+              <Button variant="outline" size="sm" className="mt-3" onClick={() => refetchComments()}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Retry comments
+              </Button>
+            </div>
+          ) : (commentsData?.comments?.length ?? 0) === 0 ? (
+            <div className="rounded-lg border border-dashed border-border bg-muted/20 p-6 text-sm text-muted-foreground">
+              No comments yet. Be the first one to add context for this task.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {commentsData!.comments.map((comment) => (
+                <div key={comment.id} className="rounded-lg border bg-muted/20 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="font-medium">{comment.authorName || 'Team member'}</div>
+                    <div className="text-xs text-muted-foreground">{formatDateTime(comment.createdAt)}</div>
+                  </div>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-6">{comment.body}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </CardContent>
       </Card>
 

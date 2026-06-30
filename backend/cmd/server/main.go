@@ -30,6 +30,7 @@ import (
 	"github.com/DangDDT/hermes-todolist/backend/internal/feature/auth_login"
 	"github.com/DangDDT/hermes-todolist/backend/internal/feature/auth_register"
 	"github.com/DangDDT/hermes-todolist/backend/internal/feature/tag_list"
+	"github.com/DangDDT/hermes-todolist/backend/internal/feature/task_comment"
 	"github.com/DangDDT/hermes-todolist/backend/internal/feature/task_create"
 	"github.com/DangDDT/hermes-todolist/backend/internal/feature/task_delete"
 	"github.com/DangDDT/hermes-todolist/backend/internal/feature/task_get"
@@ -76,6 +77,7 @@ func main() {
 	// Create repositories.
 	taskRepo := repository.NewTaskRepo(pool)
 	userRepo := repository.NewUserRepo(pool)
+	commentRepo := repository.NewCommentRepo(pool)
 
 	// Create usecases.
 	registerUC := auth_register.NewUsecase(userRepo)
@@ -85,6 +87,7 @@ func main() {
 	taskGetUC := task_get.NewUsecase(taskRepo)
 	taskUpdateUC := task_update.NewUsecase(taskRepo)
 	taskDeleteUC := task_delete.NewUsecase(taskRepo)
+	taskCommentUC := task_comment.NewUsecase(taskRepo, commentRepo)
 
 	// Create router.
 	r := chi.NewRouter()
@@ -124,6 +127,7 @@ func main() {
 			r.Mount("/", task_get.Routes(taskGetUC))
 			r.Mount("/", task_update.Routes(taskUpdateUC))
 			r.Mount("/", task_delete.Routes(taskDeleteUC))
+			r.Mount("/{id}/comments", task_comment.Routes(taskCommentUC))
 		})
 
 		r.Mount("/tags", tag_list.Routes())
