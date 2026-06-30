@@ -17,6 +17,12 @@
 | [Database Diagrams](database-diagrams.md) | MVP + future-ready ERD |
 | [Sequence Diagrams](sequence-diagrams.md) | auth/task interaction flows |
 | [Test Plan](test-plan.md) | test strategy, suites, detailed cases |
+| [Backend Spec](backend-spec.md) | backend module boundaries, validation, endpoint rules |
+| [Web Spec](web-spec.md) | route map, forms, UX states, accessibility |
+| [Mobile Spec](mobile-spec.md) | Flutter near-term architecture and readiness gates |
+| [Desktop Spec](desktop-spec.md) | Electron near-term architecture and reuse strategy |
+| [DevOps Plan](devops-plan.md) | environments, CI/CD, secrets, backups, release checklist |
+| [UX/UI Spec](ux-ui-spec.md) | design principles, IA, visual hierarchy, responsive rules |
 
 ## Planning Baseline Intent
 - Scope: MVP + near-term roadmap
