@@ -1,0 +1,965 @@
+{
+  "info": {
+    "name": "Hermes TodoList API",
+    "description": "Comprehensive API test collection for the Hermes TodoList application. Tests authentication (register, login, duplicate check), task CRUD with multi-user ownership enforcement, tags, and health endpoints.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "hermes-agent"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8080/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "token_a",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "token_b",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "task_id_a",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "task_id_b",
+      "value": "",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "Auth",
+      "description": "User registration and authentication endpoints. Sets token_a and token_b collection variables for subsequent requests.",
+      "item": [
+        {
+          "name": "Register User A",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Register User A - status 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Register User A - response is valid JSON\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "    pm.expect(jsonData.data).to.have.property('username', 'user_a');",
+                  "    pm.expect(jsonData.data).to.have.property('display_name', 'User A');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user_a\",\n  \"password\": \"password123\",\n  \"display_name\": \"User A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register the first test user (User A). Expects 201 Created."
+          }
+        },
+        {
+          "name": "Register User B",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Register User B - status 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Register User B - response is valid JSON\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "    pm.expect(jsonData.data).to.have.property('username', 'user_b');",
+                  "    pm.expect(jsonData.data).to.have.property('display_name', 'User B');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user_b\",\n  \"password\": \"password456\",\n  \"display_name\": \"User B\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Register the second test user (User B). Expects 201 Created."
+          }
+        },
+        {
+          "name": "Register Duplicate User A",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Duplicate register - status 409\", function () {",
+                  "    pm.response.to.have.status(409);",
+                  "});",
+                  "",
+                  "pm.test(\"Duplicate register - response contains error\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "    pm.expect(jsonData).to.have.property('code');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user_a\",\n  \"password\": \"password123\",\n  \"display_name\": \"User A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/register",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "register"]
+            },
+            "description": "Attempt to register a duplicate username. Expects 409 Conflict."
+          }
+        },
+        {
+          "name": "Login User A",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login User A - status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Login User A - response has token and user\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('token');",
+                  "    pm.expect(jsonData.data).to.have.property('expires_at');",
+                  "    pm.expect(jsonData.data).to.have.property('user');",
+                  "    pm.expect(jsonData.data.user).to.have.property('username', 'user_a');",
+                  "});",
+                  "",
+                  "// Store token for subsequent authenticated requests",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('token_a', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user_a\",\n  \"password\": \"password123\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as User A. Stores JWT token in collection variable `token_a`. Also sets `Set-Cookie: access_token=...` response header."
+          }
+        },
+        {
+          "name": "Login User B",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Login User B - status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Login User B - response has token and user\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('token');",
+                  "    pm.expect(jsonData.data).to.have.property('expires_at');",
+                  "    pm.expect(jsonData.data).to.have.property('user');",
+                  "    pm.expect(jsonData.data.user).to.have.property('username', 'user_b');",
+                  "});",
+                  "",
+                  "// Store token for subsequent authenticated requests",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data && jsonData.data.token) {",
+                  "    pm.collectionVariables.set('token_b', jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"user_b\",\n  \"password\": \"password456\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/auth/login",
+              "host": ["{{base_url}}"],
+              "path": ["auth", "login"]
+            },
+            "description": "Login as User B. Stores JWT token in collection variable `token_b`."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tasks",
+      "description": "Task CRUD operations. Tests ownership enforcement between two users.",
+      "item": [
+        {
+          "Create Task A (by User A)"
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var token = pm.collectionVariables.get('token_a');",
+                  "if (token) {",
+                  "    pm.request.headers.add({",
+                  "        key: 'Cookie',",
+                  "        value: 'access_token=' + token",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Create Task A - status 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Create Task A - response is valid task\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "    pm.expect(jsonData.data).to.have.property('title', 'Task A - High Priority');",
+                  "    pm.expect(jsonData.data).to.have.property('status', 'TODO');",
+                  "    pm.expect(jsonData.data).to.have.property('priority', 'HIGH');",
+                  "    pm.expect(jsonData.data).to.have.property('creator_id');",
+                  "});",
+                  "",
+                  "// Store task ID for subsequent requests",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set('task_id_a', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Task A - High Priority\",\n  \"description\": \"This is a high priority task created by User A\",\n  \"priority\": \"HIGH\",\n  \"due_date\": \"2026-08-01T00:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["tasks"]
+            },
+            "description": "Create a task as User A. Stores the returned task ID in collection variable `task_id_a`."
+          }
+        },
+        {
+          "name": "Create Task B (by User B)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var token = pm.collectionVariables.get('token_b');",
+                  "if (token) {",
+                  "    pm.request.headers.add({",
+                  "        key: 'Cookie',",
+                  "        value: 'access_token=' + token",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Create Task B - status 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Create Task B - response is valid task\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "    pm.expect(jsonData.data).to.have.property('title', 'Task B - Low Priority');",
+                  "    pm.expect(jsonData.data).to.have.property('priority', 'LOW');",
+                  "});",
+                  "",
+                  "// Store task ID for subsequent requests",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.data && jsonData.data.id) {",
+                  "    pm.collectionVariables.set('task_id_b', jsonData.data.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Task B - Low Priority\",\n  \"description\": \"This is a low priority task created by User B\",\n  \"priority\": \"LOW\",\n  \"due_date\": \"2026-09-01T00:00:00Z\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["tasks"]
+            },
+            "description": "Create a task as User B. Stores the returned task ID in collection variable `task_id_b`."
+          }
+        },
+        {
+          "name": "List Tasks (User A) - Should see only A's tasks",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var token = pm.collectionVariables.get('token_a');",
+                  "if (token) {",
+                  "    pm.request.headers.add({",
+                  "        key: 'Cookie',",
+                  "        value: 'access_token=' + token",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"List tasks (A) - status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"List tasks (A) - should contain only User A's task\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('tasks');",
+                  "    var tasks = jsonData.data.tasks;",
+                  "    pm.expect(tasks).to.be.an('array');",
+                  "    pm.expect(tasks.length).to.be.at.least(1);",
+                  "    // Verify all tasks belong to User A",
+                  "    tasks.forEach(function(task) {",
+                  "        pm.expect(task).to.have.property('title');",
+                  "        pm.expect(task).to.have.property('creator_id');",
+                  "    });",
+                  "    // The task we created should be in the list",
+                  "    var taskIds = tasks.map(function(t) { return t.id; });",
+                  "    var taskIdA = pm.collectionVariables.get('task_id_a');",
+                  "    if (taskIdA) {",
+                  "        pm.expect(taskIds).to.include(taskIdA);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["tasks"]
+            },
+            "description": "List tasks as User A. Should only see tasks created by User A (filtered by creator_id)."
+          }
+        },
+        {
+          "name": "List Tasks (User B) - Should see only B's tasks",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var token = pm.collectionVariables.get('token_b');",
+                  "if (token) {",
+                  "    pm.request.headers.add({",
+                  "        key: 'Cookie',",
+                  "        value: 'access_token=' + token",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"List tasks (B) - status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"List tasks (B) - should contain only User B's task\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('tasks');",
+                  "    var tasks = jsonData.data.tasks;",
+                  "    pm.expect(tasks).to.be.an('array');",
+                  "    // Should not see User A's tasks",
+                  "    var taskIdA = pm.collectionVariables.get('task_id_a');",
+                  "    var taskIds = tasks.map(function(t) { return t.id; });",
+                  "    if (taskIdA) {",
+                  "        pm.expect(taskIds).to.not.include(taskIdA);",
+                  "    }",
+                  "    // Should see User B's own task",
+                  "    var taskIdB = pm.collectionVariables.get('task_id_b');",
+                  "    if (taskIdB) {",
+                  "        pm.expect(taskIds).to.include(taskIdB);",
+                  "    }",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tasks",
+              "host": ["{{base_url}}"],
+              "path": ["tasks"]
+            },
+            "description": "List tasks as User B. Should only see tasks created by User B. User A's task should NOT appear."
+          }
+        },
+        {
+          "name": "Get Task A (by User B) - Expect 404 (ownership)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var token = pm.collectionVariables.get('token_b');",
+                  "if (token) {",
+                  "    pm.request.headers.add({",
+                  "        key: 'Cookie',",
+                  "        value: 'access_token=' + token",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Get Task A by B - status 404 (ownership)\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Get Task A by B - response indicates not found\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id_a}}",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id_a}}"]
+            },
+            "description": "User B attempts to access User A's task. Should return 404 because of ownership enforcement - the task doesn't belong to User B."
+          }
+        },
+        {
+          "name": "Get Task A (by User A) - Expect 200",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var token = pm.collectionVariables.get('token_a');",
+                  "if (token) {",
+                  "    pm.request.headers.add({",
+                  "        key: 'Cookie',",
+                  "        value: 'access_token=' + token",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Get Task A by A - status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Get Task A by A - response contains task details\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('id');",
+                  "    pm.expect(jsonData.data).to.have.property('title', 'Task A - High Priority');",
+                  "    pm.expect(jsonData.data).to.have.property('status');",
+                  "    pm.expect(jsonData.data).to.have.property('priority', 'HIGH');",
+                  "    pm.expect(jsonData.data).to.have.property('creator_id');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id_a}}",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id_a}}"]
+            },
+            "description": "User A retrieves their own task. Should return 200 with full task details."
+          }
+        },
+        {
+          "name": "Update Task A - Change status to IN_PROGRESS",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var token = pm.collectionVariables.get('token_a');",
+                  "if (token) {",
+                  "    pm.request.headers.add({",
+                  "        key: 'Cookie',",
+                  "        value: 'access_token=' + token",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Update Task A - status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Update Task A - response has updated fields\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('status', 'IN_PROGRESS');",
+                  "    pm.expect(jsonData.data).to.have.property('priority', 'URGENT');",
+                  "    pm.expect(jsonData.data).to.have.property('title', 'Task A - Updated');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Task A - Updated\",\n  \"status\": \"IN_PROGRESS\",\n  \"priority\": \"URGENT\",\n  \"description\": \"This task has been updated by User A\"\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id_a}}",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id_a}}"]
+            },
+            "description": "User A updates their task (partial update). Changes title, status, and priority."
+          }
+        },
+        {
+          "name": "Delete Task A (by User B) - Expect 404 (ownership)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var token = pm.collectionVariables.get('token_b');",
+                  "if (token) {",
+                  "    pm.request.headers.add({",
+                  "        key: 'Cookie',",
+                  "        value: 'access_token=' + token",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Delete Task A by B - status 404 (ownership)\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});",
+                  "",
+                  "pm.test(\"Delete Task A by B - response indicates not found\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('error');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id_a}}",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id_a}}"]
+            },
+            "description": "User B attempts to delete User A's task. Should return 404 because of ownership enforcement."
+          }
+        },
+        {
+          "name": "Delete Task A (by User A) - Expect 204",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var token = pm.collectionVariables.get('token_a');",
+                  "if (token) {",
+                  "    pm.request.headers.add({",
+                  "        key: 'Cookie',",
+                  "        value: 'access_token=' + token",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Delete Task A by A - status 204 (soft delete)\", function () {",
+                  "    pm.response.to.have.status(204);",
+                  "});",
+                  "",
+                  "pm.test(\"Delete Task A by A - no content in body\", function () {",
+                  "    pm.expect(pm.response.text()).to.be.empty;",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id_a}}",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id_a}}"]
+            },
+            "description": "User A deletes their own task. Should return 204 No Content (soft delete)."
+          }
+        },
+        {
+          "name": "List Tasks with Filters (User A)",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var token = pm.collectionVariables.get('token_a');",
+                  "if (token) {",
+                  "    pm.request.headers.add({",
+                  "        key: 'Cookie',",
+                  "        value: 'access_token=' + token",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"List tasks with filters - status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"List tasks with filters - response is valid\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('tasks');",
+                  "    pm.expect(jsonData.data.tasks).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tasks?status=TODO&priority=HIGH&search=Task",
+              "host": ["{{base_url}}"],
+              "path": ["tasks"],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "TODO",
+                  "description": "Filter by task status (TODO, IN_PROGRESS, DONE, CANCELLED)"
+                },
+                {
+                  "key": "priority",
+                  "value": "HIGH",
+                  "description": "Filter by priority (LOW, MEDIUM, HIGH, URGENT)"
+                },
+                {
+                  "key": "search",
+                  "value": "Task",
+                  "description": "Search keyword in title/description"
+                }
+              ]
+            },
+            "description": "List User A's tasks with filtering by status=TODO, priority=HIGH, and search keyword 'Task'."
+          }
+        },
+        {
+          "name": "Get Deleted Task A (by User A) - Expect 404",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var token = pm.collectionVariables.get('token_a');",
+                  "if (token) {",
+                  "    pm.request.headers.add({",
+                  "        key: 'Cookie',",
+                  "        value: 'access_token=' + token",
+                  "    });",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Get deleted Task A - status 404\", function () {",
+                  "    pm.response.to.have.status(404);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tasks/{{task_id_a}}",
+              "host": ["{{base_url}}"],
+              "path": ["tasks", "{{task_id_a}}"]
+            },
+            "description": "After soft deletion, User A tries to fetch the deleted task. Should return 404."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tags",
+      "description": "Tag listing endpoint (no authentication required).",
+      "item": [
+        {
+          "name": "List Tags",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"List tags - status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"List tags - response is valid\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('tags');",
+                  "    pm.expect(jsonData.data.tags).to.be.an('array');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tags",
+              "host": ["{{base_url}}"],
+              "path": ["tags"]
+            },
+            "description": "List all available tags. This endpoint does not require authentication."
+          }
+        }
+      ]
+    },
+    {
+      "name": "Health",
+      "description": "Health check endpoint.",
+      "item": [
+        {
+          "name": "Health Check",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Health check - status 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Health check - response has status ok\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData).to.have.property('data');",
+                  "    pm.expect(jsonData.data).to.have.property('status', 'ok');",
+                  "    pm.expect(jsonData.data).to.have.property('version');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/health",
+              "host": ["{{base_url}}"],
+              "path": ["health"]
+            },
+            "description": "Health check endpoint. Returns status and version info. No authentication required."
+          }
+        }
+      ]
+    }
+  ]
+}

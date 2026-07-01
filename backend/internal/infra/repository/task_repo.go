@@ -77,6 +77,12 @@ func (r *TaskRepo) List(ctx context.Context, filter task.TaskFilter, offset, lim
 		countArgs = append(countArgs, *filter.CreatorID)
 		argIdx++
 	}
+	if filter.Search != nil && *filter.Search != "" {
+		countQuery += ` AND (title ILIKE $` + itoa(argIdx) + ` OR description ILIKE $` + itoa(argIdx) + `)`
+		searchPattern := "%" + *filter.Search + "%"
+		countArgs = append(countArgs, searchPattern)
+		argIdx++
+	}
 
 	err := r.pool.QueryRow(ctx, countQuery, countArgs...).Scan(&total)
 	if err != nil {
@@ -102,6 +108,12 @@ func (r *TaskRepo) List(ctx context.Context, filter task.TaskFilter, offset, lim
 	if filter.CreatorID != nil {
 		query += ` AND creator_id = $` + itoa(argIdx)
 		args = append(args, *filter.CreatorID)
+		argIdx++
+	}
+	if filter.Search != nil && *filter.Search != "" {
+		query += ` AND (title ILIKE $` + itoa(argIdx) + ` OR description ILIKE $` + itoa(argIdx) + `)`
+		searchPattern := "%" + *filter.Search + "%"
+		args = append(args, searchPattern)
 		argIdx++
 	}
 

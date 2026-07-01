@@ -6,10 +6,11 @@ import (
 	"time"
 )
 
-// CreateTaskRequest is the request body for creating a task.
+// CreateTaskRequest request body creating task.
 type CreateTaskRequest struct {
 	Title       string `json:"title"`
 	Description string `json:"description"`
+	Status      string `json:"status"`
 	Priority    string `json:"priority"`
 	DueDate     string `json:"due_date"`
 	AssigneeID  string `json:"assignee_id"`

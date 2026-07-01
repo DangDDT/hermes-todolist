@@ -14,12 +14,12 @@ type Usecase struct {
 	taskRepo task.TaskRepository
 }
 
-// NewUsecase creates a new task create usecase.
+// NewUsecase creates new task create usecase.
 func NewUsecase(taskRepo task.TaskRepository) *Usecase {
 	return &Usecase{taskRepo: taskRepo}
 }
 
-// Create creates a new task.
+// Create creates new task.
 func (uc *Usecase) Create(ctx context.Context, creatorID uuid.UUID, req *CreateTaskRequest) (*CreateTaskResponse, error) {
 	priority := task.PriorityMedium
 	if req.Priority != "" {
@@ -30,14 +30,25 @@ func (uc *Usecase) Create(ctx context.Context, creatorID uuid.UUID, req *CreateT
 		priority = p
 	}
 
+	status := task.StatusTODO
+	if req.Status != "" {
+		s := task.TaskStatus(req.Status)
+		if !s.IsValid() {
+			return nil, apperrors.ValidationError("invalid status", nil)
+		}
+		status = s
+	}
+
 	dueDate := req.ParseDueDate()
 
 	t, err := task.NewTask(req.Title, req.Description, priority, dueDate, creatorID)
 	if err != nil {
 		return nil, apperrors.ValidationError(err.Error(), err)
 	}
+	// Apply status from request (NewTask defaults to StatusTodo)
+	t.Status = status
 
-	// Assign if assignee provided.
+	// Assign assignee if provided.
 	if req.AssigneeID != "" {
 		assigneeID, err := uuid.Parse(req.AssigneeID)
 		if err != nil {
