@@ -1,4 +1,4 @@
-name: CI — Lint & Test
+name: CI Lint Test
 
 on:
   push:
@@ -15,11 +15,8 @@ env:
   NODE_VERSION: "20"
 
 jobs:
-  # ============================================
-  # Backend: Go lint + test
-  # ============================================
   backend:
-    name: Backend — Go
+    name: Backend (Go)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -35,17 +32,15 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U test"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version: ${{ env.GO_VERSION }}
           cache: true
@@ -59,43 +54,38 @@ jobs:
           args: --timeout=5m
 
       - name: Run migrations
-        run: go run ./cmd/migrate up
+        run: go run ./cmd/migrate
         env:
-          DATABASE_URL: postgres://test:test@localhost:5432/hermes_todolist_test?sslmode=disable
+          DATABASE_URL: "postgres://test:test@localhost:5432/hermes_todolist_test?sslmode=disable"
 
       - name: Run tests
-        run: go test ./... -v -race -coverprofile=coverage.out -covermode=atomic
+        run: go test ./... -race -coverprofile=coverage.out -covermode=atomic
         env:
-          DATABASE_URL: postgres://test:test@localhost:5432/hermes_todolist_test?sslmode=disable
+          DATABASE_URL: "postgres://test:test@localhost:5432/hermes_todolist_test?sslmode=disable"
 
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: backend-coverage
           path: backend/coverage.out
 
-  # ============================================
-  # Frontend: TypeScript lint + test
-  # ============================================
   frontend:
-    name: Frontend — Next.js
+    name: Frontend (Next.js)
     runs-on: ubuntu-latest
     defaults:
       run:
         working-directory: frontend
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: npm
           cache-dependency-path: frontend/package-lock.json
 
-      - name: Install dependencies
+      - name: Install deps
         run: npm ci
 
       - name: ESLint
@@ -107,8 +97,8 @@ jobs:
       - name: Run tests
         run: npm run test -- --coverage
 
-      - name: Upload coverage
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: frontend-coverage
           path: frontend/coverage

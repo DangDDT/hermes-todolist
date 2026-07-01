@@ -27,17 +27,15 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready -U hermes
+          --health-cmd "pg_isready -U hermes"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
 
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Go
-        uses: actions/setup-go@v5
+      - uses: actions/setup-go@v5
         with:
           go-version: '1.23'
           cache-dependency-path: |
@@ -53,19 +51,19 @@ jobs:
       - name: Wait for Postgres
         run: |
           for i in $(seq 1 30); do
-            pg_isready -h localhost -U hermes && break
+            pg_isready -h localhost -U hermes -d hermes_todolist && break
             sleep 1
           done
 
-      - name: Run database migrations
+      - name: Run migrations
         run: |
-          for f in ./backend/internal/infra/postgres/migrations/*.up.sql; do
+          for f in backend/internal/infra/postgres/migrations/*.up.sql; do
             PGPASSWORD=hermes_secret psql -h localhost -U hermes -d hermes_todolist -f "$f"
           done
         env:
           PGPASSWORD: hermes_secret
 
-      - name: Start backend server
+      - name: Start server
         run: |
           /tmp/hermes-server &
           for i in $(seq 1 30); do
@@ -73,8 +71,8 @@ jobs:
             sleep 1
           done
         env:
-          DATABASE_URL: postgres://hermes:hermes_secret@localhost:5432/hermes_todolist?sslmode=disable
-          JWT_SECRET: ci-test-jwt-secret-key-for-github-actions
+          DATABASE_URL: "postgres://hermes:hermes_secret@localhost:5432/hermes_todolist?sslmode=disable"
+          JWT_SECRET: ci-test-secret
           JWT_EXPIRY_HOURS: 168h
           SERVER_PORT: 8080
           LOG_LEVEL: error
