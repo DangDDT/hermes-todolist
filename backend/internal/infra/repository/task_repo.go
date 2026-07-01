@@ -72,6 +72,11 @@ func (r *TaskRepo) List(ctx context.Context, filter task.TaskFilter, offset, lim
 		countArgs = append(countArgs, *filter.AssigneeID)
 		argIdx++
 	}
+	if filter.CreatorID != nil {
+		countQuery += ` AND creator_id = $` + itoa(argIdx)
+		countArgs = append(countArgs, *filter.CreatorID)
+		argIdx++
+	}
 
 	err := r.pool.QueryRow(ctx, countQuery, countArgs...).Scan(&total)
 	if err != nil {
@@ -92,6 +97,11 @@ func (r *TaskRepo) List(ctx context.Context, filter task.TaskFilter, offset, lim
 	if filter.AssigneeID != nil {
 		query += ` AND assignee_id = $` + itoa(argIdx)
 		args = append(args, *filter.AssigneeID)
+		argIdx++
+	}
+	if filter.CreatorID != nil {
+		query += ` AND creator_id = $` + itoa(argIdx)
+		args = append(args, *filter.CreatorID)
 		argIdx++
 	}
 

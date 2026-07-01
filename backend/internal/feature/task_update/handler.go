@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/DangDDT/hermes-todolist/backend/internal/domain/task"
+	"github.com/DangDDT/hermes-todolist/backend/internal/infra/middleware"
 	"github.com/DangDDT/hermes-todolist/backend/internal/shared/apperrors"
 	"github.com/DangDDT/hermes-todolist/backend/internal/shared/response"
 )
@@ -18,12 +19,12 @@ type Usecase struct {
 	taskRepo task.TaskRepository
 }
 
-// NewUsecase creates a new task update usecase.
+// NewUsecase creates new task update usecase.
 func NewUsecase(taskRepo task.TaskRepository) *Usecase {
 	return &Usecase{taskRepo: taskRepo}
 }
 
-// UpdateTaskResponse is the response for an updated task.
+// UpdateTaskResponse response for updated task.
 type UpdateTaskResponse struct {
 	ID          string  `json:"id"`
 	Title       string  `json:"title"`
@@ -34,14 +35,19 @@ type UpdateTaskResponse struct {
 	AssigneeID  *string `json:"assignee_id,omitempty"`
 }
 
-// Update modifies an existing task.
-func (uc *Usecase) Update(ctx context.Context, id uuid.UUID, req *UpdateTaskRequest) (*UpdateTaskResponse, error) {
+// Update modifies existing task (with ownership check).
+func (uc *Usecase) Update(ctx context.Context, userID, id uuid.UUID, req *UpdateTaskRequest) (*UpdateTaskResponse, error) {
 	t, err := uc.taskRepo.GetByID(ctx, id)
 	if err != nil {
 		return nil, apperrors.NotFound("Task", err)
 	}
 
 	if t.IsDeleted() {
+		return nil, apperrors.NotFound("Task", nil)
+	}
+
+	// Ownership check: only the creator can update their task
+	if t.CreatorID != userID {
 		return nil, apperrors.NotFound("Task", nil)
 	}
 
@@ -94,11 +100,11 @@ func (uc *Usecase) Update(ctx context.Context, id uuid.UUID, req *UpdateTaskRequ
 	}
 
 	resp := &UpdateTaskResponse{
-		ID:          t.ID.String(),
-		Title:       t.Title,
+		ID:       t.ID.String(),
+		Title:    t.Title,
 		Description: t.Description,
-		Status:      string(t.Status),
-		Priority:    string(t.Priority),
+		Status:   string(t.Status),
+		Priority: string(t.Priority),
 	}
 	if t.DueDate != nil {
 		resp.DueDate = t.DueDate.Format(time.RFC3339)
@@ -115,26 +121,32 @@ type Handler struct {
 	usecase *Usecase
 }
 
-// NewHandler creates a new task update handler.
+// NewHandler creates new task update handler.
 func NewHandler(usecase *Usecase) *Handler {
 	return &Handler{usecase: usecase}
 }
 
 // Update godoc
-// @Summary      Update a task
-// @Description  Partially update a task — only send fields to change (requires authentication)
-// @Tags         tasks
-// @Accept       json
-// @Produce      json
-// @Security     BearerAuth
-// @Param        id       path      string             true  "Task ID"
-// @Param        request  body      UpdateTaskRequest  true  "Fields to update"
-// @Success      200      {object}  response.Envelope
-// @Failure      400      {object}  response.Envelope
-// @Failure      401      {object}  response.Envelope
-// @Failure      404      {object}  response.Envelope
-// @Router       /tasks/{id} [put]
+// @Summary Update task
+// @Description Partially update task (only send fields to change) (requires authentication)
+// @Tags tasks
+// @Accept json
+// @Produce json
+// @Security BearerAuth
+// @Param id path string true "Task ID"
+// @Param request body UpdateTaskRequest true "Fields to update"
+// @Success 200 {object} response.Envelope
+// @Failure 400 {object} response.Envelope
+// @Failure 401 {object} response.Envelope
+// @Failure 404 {object} response.Envelope
+// @Router /tasks/{id} [put]
 func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
+	userID, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		response.Error(w, apperrors.Unauthorized("invalid token", err))
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -148,7 +160,7 @@ func (h *Handler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.usecase.Update(r.Context(), id, req)
+	result, err := h.usecase.Update(r.Context(), userID, id, req)
 	if err != nil {
 		response.Error(w, err)
 		return

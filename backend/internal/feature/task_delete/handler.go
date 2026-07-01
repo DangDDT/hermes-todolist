@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/DangDDT/hermes-todolist/backend/internal/domain/task"
+	"github.com/DangDDT/hermes-todolist/backend/internal/infra/middleware"
 	"github.com/DangDDT/hermes-todolist/backend/internal/shared/apperrors"
 	"github.com/DangDDT/hermes-todolist/backend/internal/shared/response"
 )
@@ -22,13 +23,18 @@ func NewUsecase(taskRepo task.TaskRepository) *Usecase {
 	return &Usecase{taskRepo: taskRepo}
 }
 
-// Delete soft-deletes a task.
-func (uc *Usecase) Delete(ctx context.Context, id uuid.UUID) error {
+// Delete soft-deletes task (with ownership check).
+func (uc *Usecase) Delete(ctx context.Context, userID, id uuid.UUID) error {
 	t, err := uc.taskRepo.GetByID(ctx, id)
 	if err != nil {
 		return apperrors.NotFound("Task", err)
 	}
 	if t.IsDeleted() {
+		return apperrors.NotFound("Task", nil)
+	}
+
+	// Ownership check: only the creator can delete their task
+	if t.CreatorID != userID {
 		return apperrors.NotFound("Task", nil)
 	}
 	if err := uc.taskRepo.SoftDelete(ctx, id); err != nil {
@@ -60,6 +66,12 @@ func NewHandler(usecase *Usecase) *Handler {
 // @Failure      404  {object}  response.Envelope
 // @Router       /tasks/{id} [delete]
 func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
+	userID, err := middleware.GetUserID(r.Context())
+	if err != nil {
+		response.Error(w, apperrors.Unauthorized("invalid token", err))
+		return
+	}
+
 	idStr := chi.URLParam(r, "id")
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -67,7 +79,7 @@ func (h *Handler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.usecase.Delete(r.Context(), id); err != nil {
+	if err := h.usecase.Delete(r.Context(), userID, id); err != nil {
 		response.Error(w, err)
 		return
 	}
