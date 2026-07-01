@@ -87,6 +87,7 @@ func main() {
 
 	// Global middleware.
 	r.Use(middleware.RequestID)
+	r.Use(mw.Tracing)
 	r.Use(mw.Logger(logger))
 	r.Use(middleware.Recoverer)
 	r.Use(cors.Handler(cors.Options{
