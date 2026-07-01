@@ -1,0 +1,115 @@
+name: Postman API Tests
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'tests/postman/**'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'tests/postman/**'
+  workflow_dispatch: # manual trigger
+
+jobs:
+  api-tests:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: hermes
+          POSTGRES_PASSWORD: hermes_secret
+          POSTGRES_DB: hermes_todolist
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready -U hermes
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.23'
+          cache-dependency-path: backend/go.sum
+
+      - name: Build backend
+        working-directory: ./backend
+        run: go build -o /tmp/hermes-server ./cmd/server/...
+        env:
+          CGO_ENABLED: 0
+
+      - name: Wait for Postgres
+        run: |
+          for i in $(seq 1 30); do
+            pg_isready -h localhost -U hermes && break
+            sleep 1
+          done
+
+      - name: Run database migrations
+        run: |
+          for f in ./backend/internal/infra/postgres/migrations/*.up.sql; do
+            PGPASSWORD=hermes_secret psql -h localhost -U hermes -d hermes_todolist -f "$f"
+          done
+        env:
+          PGPASSWORD: hermes_secret
+
+      - name: Start backend server
+        run: |
+          /tmp/hermes-server &
+          echo "PID=$!"
+          for i in $(seq 1 30); do
+            curl -s -o /dev/null http://localhost:8080/api/v1/health && break
+            sleep 1
+          done
+        env:
+          DATABASE_URL: postgres://hermes:hermes_secret@localhost:5432/hermes_todolist?sslmode=disable
+          JWT_SECRET: ci-test-jwt-secret-key-for-github-actions
+          JWT_EXPIRY_HOURS: 168h
+          SERVER_PORT: 8080
+          LOG_LEVEL: error
+          CORS_ORIGIN: http://localhost:3000
+
+      - name: Verify backend is running
+        run: |
+          curl -s http://localhost:8080/api/v1/health
+          echo ""
+
+      - name: Install Newman
+        run: npm install -g newman
+
+      - name: Run Postman collection
+        run: |
+          newman run tests/postman/collection.json \
+            --env-var "base_url=http://localhost:8080/api/v1" \
+            --reporters cli,junit \
+            --reporter-junit-export results/newman-report.xml \
+            --delay-request 100
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: results/newman-report.xml
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Postman API Test Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Collection: Hermes TodoList API" >> $GITHUB_STEP_SUMMARY
+          if [ -f results/newman-report.xml ]; then
+            echo "- Report: uploaded as artifact" >> $GITHUB_STEP_SUMMARY
+            echo "- ✅ All tests completed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "- ❌ Tests failed or report not generated" >> $GITHUB_STEP_SUMMARY
+          fi

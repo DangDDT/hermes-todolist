@@ -276,7 +276,7 @@
       "description": "Task CRUD operations. Tests ownership enforcement between two users.",
       "item": [
         {
-          "Create Task A (by User A)"
+          "name": "Create Task A (by User A)",
           "event": [
             {
               "listen": "prerequest",
