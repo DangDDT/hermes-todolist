@@ -67,6 +67,11 @@ func (r *TaskRepo) List(ctx context.Context, filter task.TaskFilter, offset, lim
 		countArgs = append(countArgs, string(*filter.Status))
 		argIdx++
 	}
+	if filter.Priority != nil {
+		countQuery += ` AND priority = $` + itoa(argIdx)
+		countArgs = append(countArgs, string(*filter.Priority))
+		argIdx++
+	}
 	if filter.AssigneeID != nil {
 		countQuery += ` AND assignee_id = $` + itoa(argIdx)
 		countArgs = append(countArgs, *filter.AssigneeID)
@@ -98,6 +103,11 @@ func (r *TaskRepo) List(ctx context.Context, filter task.TaskFilter, offset, lim
 	if filter.Status != nil {
 		query += ` AND status = $` + itoa(argIdx)
 		args = append(args, string(*filter.Status))
+		argIdx++
+	}
+	if filter.Priority != nil {
+		query += ` AND priority = $` + itoa(argIdx)
+		args = append(args, string(*filter.Priority))
 		argIdx++
 	}
 	if filter.AssigneeID != nil {
