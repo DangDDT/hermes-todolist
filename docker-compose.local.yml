@@ -1,0 +1,22 @@
+version: "3.9"
+
+# ============================================
+# Local test overrides — avoid port conflicts
+# ============================================
+# Usage: docker compose -f docker-compose.yml -f docker-compose.override.yml -f docker-compose.local.yml up -d api
+# ============================================
+
+services:
+  postgres:
+    ports:
+      - "5433:5432"    # Map host 5433 → container 5432 (avoid conflict with host postgres)
+
+  api:
+    ports:
+      - "8080:8080"    # Ensure API is accessible
+    environment:
+      DATABASE_URL=postgres://${POSTGRES_USER:-hermes}:${POSTGRES_PASSWORD:-hermes_secret}@postgres:5432/${POSTGRES_DB:-hermes_todolist}?sslmode=disable
+
+  nginx:
+    ports:
+      - "80:80"        # Swagger via nginx at http://localhost/swagger/

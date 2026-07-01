@@ -45,6 +45,8 @@ RUN addgroup -S hermes && adduser -S hermes -G hermes
 WORKDIR /app
 COPY --from=builder /build/server .
 COPY --from=builder /build/internal/infra/postgres/migrations ./internal/infra/postgres/migrations
+COPY --from=builder /build/docs/swagger ./docs/swagger
+RUN chmod -R 755 /app/docs/swagger
 
 USER hermes
 

@@ -18,6 +18,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
@@ -107,18 +108,24 @@ func main() {
 	})
 
 	// API v1 routes.
-	r.Route("/api/v1", func(r chi.Router) {
-		r.Route("/auth", func(r chi.Router) {
+	r.Route("/api/v1", func(r chi.Router){
+		r.Route("/auth", func(r chi.Router){
 			r.Mount("/register", auth_register.Routes(registerUC))
 			r.Mount("/login", auth_login.Routes(loginUC))
 		})
 
-		r.Route("/tasks", func(r chi.Router) {
-			r.Mount("/", task_create.Routes(taskCreateUC))
-			r.Mount("/", task_list.Routes(taskListUC))
-			r.Mount("/", task_get.Routes(taskGetUC))
-			r.Mount("/", task_update.Routes(taskUpdateUC))
-			r.Mount("/", task_delete.Routes(taskDeleteUC))
+		r.Route("/tasks", func(r chi.Router){
+			taskCreateH := task_create.NewHandler(taskCreateUC)
+			taskListH := task_list.NewHandler(taskListUC)
+			taskGetH := task_get.NewHandler(taskGetUC)
+			taskUpdateH := task_update.NewHandler(taskUpdateUC)
+			taskDeleteH := task_delete.NewHandler(taskDeleteUC)
+
+			r.Post("/", taskCreateH.Create)
+			r.Get("/", taskListH.List)
+			r.Get("/{id}", taskGetH.Get)
+			r.Put("/{id}", taskUpdateH.Update)
+			r.Delete("/{id}", taskDeleteH.Delete)
 			r.Mount("/{id}/comments", task_comment.Routes(taskCommentUC))
 		})
 
@@ -126,8 +133,18 @@ func main() {
 	})
 
 	// Swagger UI.
-	fs := http.FileServer(http.Dir("./docs/swagger"))
-	r.Get("/swagger/*", http.StripPrefix("/swagger/", fs).ServeHTTP)
+	r.Get("/swagger", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/swagger/", http.StatusMovedPermanently)
+	})
+	r.Get("/swagger/*", func(w http.ResponseWriter, r *http.Request) {
+		// Serve index.html for /swagger/ root, otherwise serve static file
+		path := strings.TrimPrefix(r.URL.Path, "/swagger/")
+		if path == "" || path == "/" {
+			http.ServeFile(w, r, "./docs/swagger/index.html")
+			return
+		}
+		http.ServeFile(w, r, "./docs/swagger/"+path)
+	})
 
 	// Start server.
 	addr := fmt.Sprintf(":%d", cfg.Server.Port)

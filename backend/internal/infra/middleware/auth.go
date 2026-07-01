@@ -18,10 +18,10 @@ const userIDKey contextKey = "user_id"
 
 // Skip paths that don't require authentication.
 var skipPaths = map[string]bool{
-	"/health":        true,
-	"/auth/login":    true,
-	"/auth/register": true,
-	"/swagger":       true,
+	"/api/v1/health":        true,
+	"/api/v1/auth/login":    true,
+	"/api/v1/auth/register": true,
+	"/swagger":              true,
 }
 
 // JWTAuth returns a Chi middleware that validates JWT tokens from cookies.
